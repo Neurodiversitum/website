@@ -75,14 +75,14 @@ jobs:
       # 0.5 GB of Actions storage.
       - name: Screenshots
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: screenshots
           path: e2e/screenshots
           retention-days: 1
       - name: Test traces of failed checks
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results
           path: e2e/results
@@ -92,7 +92,7 @@ jobs:
         run: npm run lhci
       - name: Lighthouse reports
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lighthouse
           path: .lighthouseci
