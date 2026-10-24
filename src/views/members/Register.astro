@@ -1,0 +1,196 @@
+---
+// The Join page: creates the account and sends the first sign-in link. The form shows one
+// question at a time (src/lib/stepper.ts); without JavaScript it shows every question at once.
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Page from '@/components/Page.astro';
+import PageHead from '@/components/PageHead.astro';
+import Block from '@/components/Block.astro';
+import PageEnd from '@/components/PageEnd.astro';
+import ClipVideo from '@/components/ClipVideo.astro';
+import ProfileFields from '@/components/members/ProfileFields.astro';
+import T from '@/components/T.astro';
+import Link from '@/components/Link.astro';
+import { dict } from '@/data/copy';
+import { asLanguage, copyText } from '@/lib/i18n';
+import type { RegisterState } from '@/lib/members/handlers';
+
+interface Props {
+  state: RegisterState;
+}
+const {
+  state: { state, errors, rateLimited, values },
+} = Astro.props;
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const configured = Astro.locals.configured;
+// After a post (sent, or errors to fix) the page opens on the form.
+const posted = state === 'sent' || errors.length > 0 || rateLimited;
+---
+
+<BaseLayout
+  title={t('meta.join')}
+  description={t('meta.joinDescription')}
+  active="join"
+  hideJoin
+>
+  <Page>
+    <PageHead section="join">
+      <ClipVideo name="studyGroup" slot="side" still />
+    </PageHead>
+    <Block title="members.registerTitle" sub="join.formSub" class="join-block">
+      <div class="form-grid">
+        <div data-build style="--i:1">
+          <T section="join" name="body" as="p" class="lede" />
+          <ul class="checks">
+            <T section="join" name="point1" as="li" />
+            <T section="join" name="point2" as="li" />
+            <T section="join" name="point3" as="li" />
+          </ul>
+          <p class="help after">
+            <T section="join" name="alreadyMember" />{' '}
+            <Link href="/members/login">
+              <T section="join" name="signIn" />
+            </Link>
+          </p>
+        </div>
+        <div
+          class="form panel"
+          id="signup"
+          data-build
+          data-posted={posted ? '' : undefined}
+          style="--i:2"
+        >
+          {!configured ? (
+            <div class="notice">
+              <p>
+                <strong>
+                  <T section="members" name="notConfiguredTitle" />
+                </strong>
+              </p>
+              <p>
+                <T section="members" name="notConfiguredBody" />
+              </p>
+            </div>
+          ) : state === 'sent' ? (
+            <div class="notice" role="status">
+              <p>
+                <strong>
+                  <T section="members" name="registeredTitle" />
+                </strong>
+              </p>
+              <p>
+                <T section="members" name="registeredBody" />
+              </p>
+            </div>
+          ) : (
+            <form method="post" novalidate data-stepper>
+              {rateLimited && (
+                <div class="notice error" role="alert">
+                  <p>
+                    <T section="members" name="errorRate" />
+                  </p>
+                </div>
+              )}
+              {errors.length > 0 && (
+                <div class="notice error" role="alert">
+                  <p>
+                    <T section="members" name="fixErrors" />
+                  </p>
+                </div>
+              )}
+              <div class="step-head" aria-live="polite">
+                <span
+                  class="step-count"
+                  data-step-count
+                  data-pattern={t('members.stepCount')}
+                ></span>
+                <div
+                  class="step-track"
+                  role="progressbar"
+                  aria-label={t('members.registerTitle')}
+                  aria-valuemin="1"
+                >
+                  <i data-step-bar></i>
+                </div>
+              </div>
+              <div class="steps" data-steps>
+                <ProfileFields values={values} errors={errors} withEmail />
+                <fieldset
+                  class:list={[{ invalid: errors.includes('privacyConsent') }]}
+                  data-step="consent"
+                  data-error={t('members.errPrivacyConsent')}
+                >
+                  <label class="choice consent">
+                    <input
+                      type="checkbox"
+                      name="privacyConsent"
+                      required
+                      checked={values.privacyConsent === 'on'}
+                      aria-invalid={
+                        errors.includes('privacyConsent') ? 'true' : undefined
+                      }
+                    />
+                    <span>
+                      <T section="members" name="privacyConsent" />{' '}
+                      <Link href="/privacy">
+                        <T section="members" name="privacyLink" />
+                      </Link>
+                    </span>
+                  </label>
+                  {errors.includes('privacyConsent') && (
+                    <p class="field-error">
+                      <T section="members" name="errPrivacyConsent" />
+                    </p>
+                  )}
+                </fieldset>
+              </div>
+              <div class="form-actions">
+                <button
+                  class="btn step-back"
+                  type="button"
+                  data-step-back
+                  hidden
+                >
+                  <span class="arrow" aria-hidden="true">
+                    ←
+                  </span>
+                  <T section="members" name="stepBack" />
+                </button>
+                <button
+                  class="btn primary step-next"
+                  type="button"
+                  data-step-next
+                  hidden
+                >
+                  <T section="members" name="stepNext" />
+                  <span class="arrow" aria-hidden="true">
+                    →
+                  </span>
+                </button>
+                <button class="btn primary" type="submit">
+                  <T section="members" name="createAccount" />
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </Block>
+    <PageEnd title="join.questionsTitle" body="join.questionsBody" />
+  </Page>
+</BaseLayout>
+
+<script>
+  import { initStepper } from '@/lib/stepper';
+
+  const init = () => {
+    initStepper();
+    const panel = document.querySelector<HTMLElement>('#signup[data-posted]');
+    if (panel && !panel.dataset.shown) {
+      panel.dataset.shown = '1';
+      panel.scrollIntoView({ block: 'center' });
+    }
+  };
+  init();
+  document.addEventListener('ndt:page', init);
+</script>

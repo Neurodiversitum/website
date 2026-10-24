@@ -1,0 +1,165 @@
+---
+import '@fontsource-variable/geist';
+import geistLatin from '@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url';
+import '@/styles/global.css';
+import Header from '@/components/Header.astro';
+import { site } from '@/data/site';
+import { images, type ImageKey } from '@/data/media';
+import {
+  LOCALES,
+  asLanguage,
+  localePath,
+  pagePath,
+  stripLocale,
+} from '@/lib/i18n';
+import type { SkyMode } from '@/lib/sky';
+
+interface Props {
+  title: string;
+  description: string;
+  active?: string;
+  image?: string;
+  /** The image of the page head: preloaded, so it paints early, and used as the social image. */
+  headImage?: ImageKey;
+  /** `hero` (start page), `sections` (one section per screen) or `plain` (scrolls). */
+  sky?: SkyMode;
+  /** Hide the Join pill in the header (the join page and the member area). */
+  hideJoin?: boolean;
+}
+const {
+  title,
+  description,
+  active = '',
+  headImage,
+  sky = 'plain',
+  hideJoin = false,
+} = Astro.props;
+const head = headImage ? images[headImage] : null;
+const image =
+  Astro.props.image ?? (head?.src ? `${head.src}-1280.webp` : site.socialImage);
+const lang = asLanguage(Astro.currentLocale);
+const basePath = stripLocale(pagePath(Astro.url.pathname));
+const canonical = new URL(localePath(lang, basePath), site.url);
+const alternates = LOCALES.map((code) => ({
+  code,
+  href: new URL(localePath(code, basePath), site.url),
+}));
+---
+
+<!doctype html>
+<html lang={lang} class:list={[{ paged: sky !== 'plain' }]}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="description" content={description} />
+    <link
+      rel="preload"
+      href={geistLatin}
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    {head?.src && (
+      <link
+        rel="preload"
+        as="image"
+        imagesrcset={`${head.src}-640.webp 640w, ${head.src}-960.webp 960w, ${head.src}-1280.webp 1280w`}
+        imagesizes="(min-width: 821px) 45vw, calc(100vw - 32px)"
+        fetchpriority="high"
+      />
+    )}
+    <meta name="theme-color" content="#04050a" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="canonical" href={canonical} />
+    {alternates.map((alt) => (
+      <link rel="alternate" hreflang={alt.code} href={alt.href} />
+    ))}
+    <link rel="alternate" hreflang="x-default" href={alternates[0].href} />
+    <link rel="icon" href={site.favicon} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href={site.touchIcon} />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:title" content={`${title} · ${site.name}`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(image, site.url)} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={lang === 'de' ? 'de_DE' : 'en_GB'} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>{title} · {site.name}</title>
+    <script is:inline>
+      // Before the first paint: sections and their build-up need JavaScript; a paused sky stays paused.
+      try {
+        var root = document.documentElement;
+        root.classList.add('js');
+        var p = JSON.parse(localStorage.getItem('ndt_prefs') || '{}');
+        if (p.motion === 'paused') root.classList.add('motion-paused');
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <canvas id="sky" aria-hidden="true"></canvas>
+    <i class="glow-bg" aria-hidden="true">
+      <i></i>
+    </i>
+    <Header active={active} />
+    <main id="main" class="stage">
+      <div
+        class="view"
+        data-sky={sky}
+        data-active={active}
+        data-join-pill={hideJoin ? 'hide' : undefined}
+      >
+        <slot />
+      </div>
+    </main>
+    <script>
+      import { initChrome, readPrefs, updateChrome } from '@/lib/chrome';
+      import { initGlow, scanGlow } from '@/lib/glow';
+      import { initProminent, initReveal } from '@/lib/reveal';
+      import { initCalendar } from '@/lib/calendar';
+      import { initRouter } from '@/lib/router';
+      import { initSections, pageLoaded } from '@/lib/sections';
+      import { initSky } from '@/lib/sky';
+
+      // Every page, also after a soft page switch: sections, sky, navigation, texts.
+      const page = () => {
+        const view = document.querySelector<HTMLElement>(
+          'main .view:not(.leaving)',
+        );
+        initSections();
+        updateChrome(view?.dataset.active ?? '');
+        scanGlow();
+        initReveal();
+        initProminent();
+        initCalendar();
+      };
+      initChrome();
+      initGlow();
+      document.addEventListener('ndt:page', page);
+      initRouter();
+      page();
+      // The sky starts shortly after the page has loaded, so the headline (largest contentful
+      // paint) never competes with the canvas. Until then the canvas shows the page ground;
+      // then the sky fades in (global.css, #sky).
+      const loaded = new Promise((resolve) =>
+        document.readyState === 'complete'
+          ? resolve(null)
+          : addEventListener('load', resolve, { once: true }),
+      );
+      Promise.race([
+        loaded.then(() => new Promise((resolve) => setTimeout(resolve, 350))),
+        new Promise((resolve) => setTimeout(resolve, 2500)),
+      ]).then(() =>
+        requestAnimationFrame(() => {
+          initSky(readPrefs().motion === 'paused');
+          pageLoaded();
+        }),
+      );
+    </script>
+  </body>
+</html>

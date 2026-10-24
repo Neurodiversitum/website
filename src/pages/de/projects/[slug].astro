@@ -1,0 +1,17 @@
+---
+import ProjectDetail from '@/views/ProjectDetail.astro';
+import { projectDetails } from '@/data/site';
+import { getProjects } from '@/lib/content';
+
+export function getStaticPaths() {
+  return getProjects()
+    .filter((project) => project.slug in projectDetails)
+    .map((project) => ({
+      params: { slug: project.slug },
+      props: { slug: project.slug as keyof typeof projectDetails },
+    }));
+}
+const { slug } = Astro.props;
+---
+
+<ProjectDetail slug={slug} />

@@ -1,0 +1,11 @@
+---
+import Material from '@/views/members/Material.astro';
+import { handleMaterial } from '@/lib/members/handlers';
+
+export const prerender = false;
+
+const state = await handleMaterial(Astro);
+if (state instanceof Response) return state;
+---
+
+<Material state={state} />

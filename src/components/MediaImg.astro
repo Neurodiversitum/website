@@ -1,0 +1,55 @@
+---
+// One image of the media registry (src/data/media.ts) inside a frame the parent draws. AI images
+// get a small "AI" chip with the full disclosure for screen readers (EU AI Act, Article 50(4)).
+// `tall` uses the 3:4 crops (picture tiles), the default the 16:9 crops.
+import Placeholder from './Placeholder.astro';
+import { dict } from '@/data/copy';
+import { images, type ImageKey, type MediaImage } from '@/data/media';
+import { asLanguage, copyText } from '@/lib/i18n';
+
+interface Props {
+  name: ImageKey;
+  eager?: boolean;
+  tall?: boolean;
+  sizes?: string;
+  /** Decorative next to a text that says the same (tiles): empty alt. */
+  decorative?: boolean;
+}
+const {
+  name,
+  eager = false,
+  tall = false,
+  sizes = '(min-width: 821px) 33vw, 100vw',
+  decorative = false,
+} = Astro.props;
+const image: MediaImage = images[name];
+const lang = asLanguage(Astro.currentLocale);
+const note = copyText(dict, lang, 'common.aiImageNote');
+const chip = copyText(dict, lang, 'common.aiChip');
+const base = image.src;
+const set = tall
+  ? `${base}-tall-480.webp 480w, ${base}-tall-720.webp 720w`
+  : `${base}-640.webp 640w, ${base}-960.webp 960w, ${base}-1280.webp 1280w`;
+---
+
+{image.kind === 'placeholder' || !base ? (
+  <Placeholder pattern={image.pattern ?? 'orbits'} />
+) : (
+  <img
+    src={tall ? `${base}-tall-720.webp` : `${base}-1280.webp`}
+    srcset={set}
+    sizes={sizes}
+    width={tall ? 720 : image.width}
+    height={tall ? 960 : image.height}
+    alt={decorative ? '' : image.alt[lang]}
+    loading={eager ? 'eager' : 'lazy'}
+    decoding="async"
+    fetchpriority={eager ? 'high' : undefined}
+  />
+)}
+{image.kind === 'ai' && (
+  <span class="ai-chip" title={note}>
+    <span aria-hidden="true">{chip}</span>
+    <span class="sr-only">{note}</span>
+  </span>
+)}

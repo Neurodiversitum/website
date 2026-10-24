@@ -1,0 +1,100 @@
+{
+  "team": [
+    {
+      "id": "3f52fe73-c76e-8104-9035-e83d3f29e1a0",
+      "name": "Maximilian Michels",
+      "role": {
+        "en": "IT Lead",
+        "de": "Leitung IT"
+      },
+      "bio": {
+        "en": "",
+        "de": ""
+      },
+      "linkedin": "https://www.linkedin.com/in/maximilianmichels17/",
+      "group": "Board",
+      "order": 1,
+      "photo": "/assets/team-max.webp"
+    },
+    {
+      "id": "3f52fe73-c76e-8129-9f16-fb6544f21a21",
+      "name": "Varvara Sharova",
+      "role": {
+        "en": "Communications Lead",
+        "de": "Leitung Kommunikation"
+      },
+      "bio": {
+        "en": "",
+        "de": ""
+      },
+      "linkedin": "https://www.linkedin.com/in/vsharova/",
+      "group": "Board",
+      "order": 2,
+      "photo": "/assets/team-varvara.webp"
+    },
+    {
+      "id": "3f52fe73-c76e-8111-99d6-d47c42b5e95c",
+      "name": "Vincent Bukal",
+      "role": {
+        "en": "Marketing Lead",
+        "de": "Leitung Marketing"
+      },
+      "bio": {
+        "en": "",
+        "de": ""
+      },
+      "linkedin": "https://www.linkedin.com/in/vincent-bukal/",
+      "group": "Board",
+      "order": 3,
+      "photo": "/assets/team-vincent.webp"
+    }
+  ],
+  "projects": [
+    {
+      "id": "3f52fe73-c76e-814b-a350-ceb39cb10407",
+      "slug": "quiet-zones",
+      "title": {
+        "en": "Quiet zones",
+        "de": "Ruhezonen"
+      },
+      "summary": {
+        "en": "Low-stimulation rooms to study or decompress.",
+        "de": "Reizarme Räume zum Lernen und Entspannen."
+      },
+      "status": null,
+      "order": 1,
+      "image": null
+    },
+    {
+      "id": "3f52fe73-c76e-819a-8fc6-caf87f6c3f69",
+      "slug": "ambient-lighting",
+      "title": {
+        "en": "Ambient lighting",
+        "de": "Sanftes Licht"
+      },
+      "summary": {
+        "en": "Warmer, dimmable lighting instead of harsh fluorescents.",
+        "de": "Wärmeres, dimmbares Licht statt grellem Neonlicht."
+      },
+      "status": null,
+      "order": 2,
+      "image": null
+    },
+    {
+      "id": "3f52fe73-c76e-8109-989b-ca88d07d3dfc",
+      "slug": "shorter-lectures",
+      "title": {
+        "en": "Shorter lectures",
+        "de": "Kürzere Vorlesungen"
+      },
+      "summary": {
+        "en": "Shorter blocks with real breaks.",
+        "de": "Kürzere Blöcke mit echten Pausen."
+      },
+      "status": null,
+      "order": 3,
+      "image": null
+    }
+  ],
+  "events": []
+}

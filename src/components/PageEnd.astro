@@ -1,0 +1,45 @@
+---
+// The end of an inner page, as the closing section of the study: a centred heading, one line,
+// the button and the club address, then the legal links.
+import Footer from './Footer.astro';
+import T from './T.astro';
+import Link from './Link.astro';
+import { site } from '@/data/site';
+
+interface Props {
+  /** Copy paths. */
+  title: string;
+  body: string;
+  button?: string;
+  href?: string;
+  /** The button is the "Join the club" button. */
+  join?: boolean;
+  mail?: boolean;
+}
+const {
+  title,
+  body,
+  button,
+  href = '/join',
+  join = false,
+  mail = true,
+} = Astro.props;
+---
+
+<section class="page-end">
+  <T path={title} as="h2" data-build />
+  <T path={body} as="p" data-build style="--i:1" />
+  {button && (
+    <div data-build style="--i:2">
+      <Link class="btn primary" href={href} data-join={join ? '' : undefined}>
+        <T path={button} />
+      </Link>
+    </div>
+  )}
+  {mail && (
+    <span class="mail" data-build style="--i:3">
+      <a href={`mailto:${site.email}`}>{site.email}</a>
+    </span>
+  )}
+</section>
+<Footer />

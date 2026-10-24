@@ -1,0 +1,2 @@
+# Files in the build output that Cloudflare must not publish as public assets.
+wrangler.json

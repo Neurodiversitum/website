@@ -1,0 +1,11 @@
+---
+import Login from '@/views/members/Login.astro';
+import { handleLogin } from '@/lib/members/handlers';
+
+export const prerender = false;
+
+const state = await handleLogin(Astro);
+if (state instanceof Response) return state;
+---
+
+<Login state={state} />

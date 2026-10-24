@@ -1,0 +1,146 @@
+---
+// Board view: every published event from Notion with its registrations, then earlier events.
+// Events are created and edited only in Notion; this page links there and shows the sync state.
+import MemberShell from '@/components/members/MemberShell.astro';
+import T from '@/components/T.astro';
+import Link from '@/components/Link.astro';
+import { dict } from '@/data/copy';
+import { asLanguage, copyText } from '@/lib/i18n';
+import { formatEventDate } from '@/lib/content';
+import type { BoardEventsState } from '@/lib/members/handlers';
+import type { EventGroup } from '@/lib/events/rules';
+import { databases } from '../../../scripts/notion.mjs';
+
+interface Props {
+  state: BoardEventsState;
+}
+const {
+  state: { groups, sync, live },
+} = Astro.props;
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const stamp = new Intl.DateTimeFormat(lang === 'de' ? 'de-DE' : 'en-GB', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'Europe/Berlin',
+});
+const notionUrl = `https://www.notion.so/${databases.events}`;
+const earlierIndex = groups.findIndex((group: EventGroup) => !group.upcoming);
+const hasRegistrations = groups.some((group) => group.registrations.length > 0);
+---
+
+<MemberShell title="boardEventsTitle" sub="boardEventsSub" active="board">
+  <div class="form wide">
+    <T section="members" name="boardEventsNotion" as="p" class="lede" />
+    {!live ? (
+      <div class="notice" role="status">
+        <p>{t('members.boardEventsNoToken')}</p>
+      </div>
+    ) : sync.error ? (
+      <div class="notice" role="status">
+        <p>{t('members.boardEventsSyncFailed')}</p>
+      </div>
+    ) : null}
+    {live && sync.syncedAt && (
+      <p class="help">
+        {t('members.boardEventsSynced')} {stamp.format(new Date(sync.syncedAt))}
+      </p>
+    )}
+    <div class="form-actions top">
+      <a
+        class="btn primary small"
+        href={notionUrl}
+        target="_blank"
+        rel="noopener"
+      >
+        <T section="members" name="boardEventsOpenNotion" />
+      </a>
+      <Link class="btn small" href="/members/board">
+        <T section="members" name="boardMembersLink" />
+      </Link>
+      {hasRegistrations && (
+        <a class="btn small" href="/api/members/board/registrations.csv">
+          <T section="members" name="exportRegistrations" />
+        </a>
+      )}
+    </div>
+    {groups.length === 0 ? (
+      <p class="help">
+        <T section="members" name="noBoardEvents" />
+      </p>
+    ) : (
+      groups.map((group, index) => (
+        <section class="board-event">
+          {index === earlierIndex && (
+            <p class="help">
+              <strong>
+                <T section="members" name="boardEventsEarlier" />
+              </strong>
+            </p>
+          )}
+          <h2 class="sub-title">
+            {group.title}
+            <span class="sub">
+              {group.registrations.length}{' '}
+              {t(
+                group.registrations.length === 1
+                  ? 'members.registrationCountOne'
+                  : 'members.registrationsCount',
+              )}
+            </span>
+          </h2>
+          <p class="help">
+            {group.start &&
+              formatEventDate(
+                {
+                  start: group.start,
+                  end: group.end,
+                  isDatetime: group.start.length > 10,
+                },
+                lang,
+              )}
+            {group.location && ` · ${group.location}`}
+            {group.registrations.length > 0 && (
+              <>
+                {' · '}
+                <a
+                  href={`/api/members/board/registrations.csv?event=${encodeURIComponent(group.eventId)}`}
+                >
+                  {t('members.exportEvent')}
+                </a>
+              </>
+            )}
+          </p>
+          {group.registrations.length === 0 ? (
+            <p class="help">
+              <T section="members" name="noEventRegistrations" />
+            </p>
+          ) : (
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th scope="col">{t('members.colName')}</th>
+                    <th scope="col">{t('members.colEmail')}</th>
+                    <th scope="col">{t('members.colRegisteredAt')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {group.registrations.map((row) => (
+                    <tr>
+                      <th scope="row">{row.name}</th>
+                      <td>
+                        <a href={`mailto:${row.email}`}>{row.email}</a>
+                      </td>
+                      <td>{stamp.format(new Date(row.created_at))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      ))
+    )}
+  </div>
+</MemberShell>

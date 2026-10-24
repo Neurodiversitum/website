@@ -1,0 +1,54 @@
+---
+// Shared layout of the two Tally form pages (Idea Wall, Newsletter): the head, then a text
+// column with three points beside the form, the way to join at the end.
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Page from '@/components/Page.astro';
+import PageHead from '@/components/PageHead.astro';
+import Block from '@/components/Block.astro';
+import TallyEmbed from '@/components/TallyEmbed.astro';
+import PageEnd from '@/components/PageEnd.astro';
+import T from '@/components/T.astro';
+import { dict } from '@/data/copy';
+import type { forms } from '@/data/site';
+import { asLanguage, copyText } from '@/lib/i18n';
+
+interface Props {
+  form: keyof typeof forms;
+  active?: string;
+}
+const { form, active } = Astro.props;
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+---
+
+<BaseLayout
+  title={t(`meta.${form}`)}
+  description={t(`meta.${form}Description`)}
+  active={active}
+  headImage={form}
+>
+  <Page>
+    <PageHead section={form} media={form} />
+    <Block title={`${form}.title`} sub={`${form}.formSub`}>
+      <div class="form-grid">
+        <div data-build style="--i:1">
+          <T section={form} name="body" as="p" class="lede" />
+          <ul class="checks">
+            <T section={form} name="point1" as="li" />
+            <T section={form} name="point2" as="li" />
+            <T section={form} name="point3" as="li" />
+          </ul>
+        </div>
+        <div data-build style="--i:2">
+          <TallyEmbed form={form} title={t(`${form}.formTitle`)} />
+        </div>
+      </div>
+    </Block>
+    <PageEnd
+      title="home.ctaTitle"
+      body="home.ctaBody"
+      button="home.joinCta"
+      join
+    />
+  </Page>
+</BaseLayout>

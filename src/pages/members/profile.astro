@@ -1,0 +1,11 @@
+---
+import Profile from '@/views/members/Profile.astro';
+import { handleProfile } from '@/lib/members/handlers';
+
+export const prerender = false;
+
+const state = await handleProfile(Astro);
+if (state instanceof Response) return state;
+---
+
+<Profile state={state} />

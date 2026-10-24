@@ -1,0 +1,49 @@
+{
+  "name": "neurodiversitum-website",
+  "version": "2.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 WRANGLER_LOG_PATH=.wrangler/wrangler.log astro dev",
+    "content": "node --env-file-if-exists=.env scripts/fetch-content.mjs",
+    "media": "node scripts/export-media.mjs",
+    "build": "npm run types && node --env-file-if-exists=.env scripts/fetch-content.mjs && ASTRO_TELEMETRY_DISABLED=1 WRANGLER_LOG_PATH=.wrangler/wrangler.log astro build",
+    "preview": "ASTRO_TELEMETRY_DISABLED=1 WRANGLER_LOG_PATH=.wrangler/wrangler.log astro preview",
+    "types": "wrangler types --include-runtime=false",
+    "check": "npm run types && ASTRO_TELEMETRY_DISABLED=1 WRANGLER_LOG_PATH=.wrangler/wrangler.log astro check",
+    "test": "node --test tests/*.test.mjs",
+    "validate:html": "html-validate \"dist/**/*.html\"",
+    "check:links": "linkinator dist/client --recurse --url-rewrite-search '(:\\d+(?:/[\\w-]+)+)(?=$|[?#])' --url-rewrite-replace '$1.html' --skip '^(mailto:|https://)|/(de/)?(join|members|events)(/|\\.html|$)|/(api|media)/'",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "ci": "npm run format:check && npm run check && npm run test && npm run build && npm run validate:html && npm run check:links && npm run test:e2e && npm run lhci",
+    "check:links:external": "linkinator dist/client --recurse --url-rewrite-search '(:\\d+(?:/[\\w-]+)+)(?=$|[?#])' --url-rewrite-replace '$1.html' --skip '^(mailto:|https://neurodiversitum.org|https://www.youtube-nocookie.com|https://tally.so)|/(de/)?(join|members|events)(/|\\.html|$)|/(api|media)/'",
+    "deploy": "wrangler deploy",
+    "test:e2e": "playwright test --config e2e/playwright.config.ts",
+    "lhci": "lhci autorun --config=lighthouserc.cjs"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "14.3.4",
+    "@fontsource-variable/geist": "5.3.0",
+    "astro": "7.3.8",
+    "better-auth": "1.7.7",
+    "postal-mime": "4.0.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@astrojs/sitemap": "^3.7.4",
+    "@axe-core/playwright": "4.13.0",
+    "@lhci/cli": "0.15.1",
+    "@playwright/test": "1.64.0",
+    "html-validate": "11.16.2",
+    "linkinator": "8.1.0",
+    "prettier": "3.9.9",
+    "prettier-plugin-astro": "1.1.1",
+    "sharp": "0.35.5",
+    "typescript": "6.0.3",
+    "wrangler": "4.149.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

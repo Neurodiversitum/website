@@ -1,0 +1,108 @@
+---
+// A short clip from the media registry in a page-head frame: poster first, plays only after the
+// visitor presses play, with a visible pause button, no sound, and the AI chip.
+import { videos, type VideoKey } from '@/data/media';
+import { dict } from '@/data/copy';
+import { asLanguage, copyText } from '@/lib/i18n';
+
+interface Props {
+  name: VideoKey;
+  class?: string;
+  /** Shows only the still picture of the clip, without the play button. */
+  still?: boolean;
+}
+const { name, class: className, still = false } = Astro.props;
+const video = videos[name];
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+---
+
+<figure class:list={['head-pic', className]} data-clip={still ? undefined : ''}>
+  {still ? (
+    <img
+      src={video.poster}
+      width={video.width}
+      height={video.height}
+      alt={video.alt[lang]}
+      decoding="async"
+    />
+  ) : (
+    <Fragment>
+      <video
+        width={video.width}
+        height={video.height}
+        poster={video.poster}
+        preload="none"
+        muted
+        loop
+        playsinline
+        aria-label={video.alt[lang]}
+      >
+        <source src={video.src} type="video/mp4" />
+      </video>
+      <button
+        type="button"
+        class="clip-toggle"
+        aria-pressed="false"
+        data-clip-toggle
+        data-play={t('common.play')}
+        data-pause={t('common.pause')}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            class="icon-play"
+            d="M8 5.5v13l10.5-6.5z"
+            fill="currentColor"
+          ></path>
+          <path
+            class="icon-pause"
+            d="M7 5h4v14H7zM13 5h4v14h-4z"
+            fill="currentColor"
+          ></path>
+        </svg>
+        <span data-clip-label>{t('common.play')}</span>
+      </button>
+    </Fragment>
+  )}
+  {video.kind === 'ai' && (
+    <span class="ai-chip" title={t('common.aiVideoNote')}>
+      <span aria-hidden="true">{t('common.aiChip')}</span>
+      <span class="sr-only">{t('common.aiVideoNote')}</span>
+    </span>
+  )}
+</figure>
+
+<script>
+  // On every page (also after a soft page switch, see src/lib/router.ts).
+  const init = () =>
+    document.querySelectorAll<HTMLElement>('[data-clip]').forEach((frame) => {
+      if (frame.dataset.bound) return;
+      frame.dataset.bound = '1';
+      const video = frame.querySelector('video');
+      const button =
+        frame.querySelector<HTMLButtonElement>('[data-clip-toggle]');
+      const label = frame.querySelector<HTMLElement>('[data-clip-label]');
+      if (!video || !button || !label) return;
+      const show = (playing: boolean) => {
+        frame.dataset.playing = String(playing);
+        button.setAttribute('aria-pressed', String(playing));
+        label.textContent = playing
+          ? button.dataset.pause!
+          : button.dataset.play!;
+      };
+      button.addEventListener('click', () => {
+        if (video.paused)
+          video.play().then(
+            () => show(true),
+            () => show(false),
+          );
+        else {
+          video.pause();
+          show(false);
+        }
+      });
+      video.addEventListener('ended', () => show(false));
+    });
+  init();
+  document.addEventListener('ndt:page', init);
+</script>

@@ -1,0 +1,102 @@
+---
+// Click-to-load wrapper for third-party embeds (YouTube, Tally).
+// The embed sits in a <template>, so the browser contacts the provider only after
+// the visitor clicks "Load", or after choosing "Always load" for external media
+// in the settings panel. Loading one embed loads all embeds of the same provider on the page.
+import T from './T.astro';
+import Link from './Link.astro';
+
+interface Props {
+  provider: 'youtube' | 'tally';
+}
+const { provider } = Astro.props;
+const copy = {
+  youtube: { notice: 'youtubeNotice', load: 'loadVideo' },
+  tally: { notice: 'tallyNotice', load: 'loadForm' },
+}[provider];
+---
+
+<div class:list={['consent', `consent-${provider}`]} data-consent={provider}>
+  <div class="consent-box">
+    <T section="common" name={copy.notice} as="p" />
+    <div class="consent-actions">
+      <button type="button" class="btn compact" data-consent-load>
+        <T section="common" name={copy.load} />
+      </button>
+      <Link class="consent-link" href="/privacy">
+        <T section="common" name="privacyLink" />
+      </Link>
+    </div>
+  </div>
+  <template>
+    <slot />
+  </template>
+</div>
+
+<script>
+  const TALLY_SCRIPT = 'https://tally.so/widgets/embed.js';
+
+  // The loaded script is marked with a data attribute. A src selector built from a variable
+  // ends up in the minified inline script as a literal src attribute with a placeholder,
+  // which naive crawlers read as a relative link (the requests for /newsletter/$%7Be%7D).
+  const loadTallyScript = () => {
+    if (document.querySelector('script[data-tally-embed]')) return;
+    const script = document.createElement('script');
+    script.dataset.tallyEmbed = '';
+    script.src = TALLY_SCRIPT;
+    script.async = true;
+    document.body.append(script);
+  };
+
+  const activate = (root: HTMLElement) => {
+    if (root.dataset.loaded) return;
+    const template = root.querySelector('template');
+    if (!template) return;
+    root.dataset.loaded = 'true';
+    root.replaceChildren(template.content.cloneNode(true));
+    root
+      .querySelectorAll<HTMLIFrameElement>('iframe[data-src]')
+      .forEach((frame) => {
+        if (frame.dataset.src) frame.src = frame.dataset.src;
+      });
+    if (root.dataset.consent === 'tally') loadTallyScript();
+  };
+
+  const activateProvider = (provider?: string) => {
+    document
+      .querySelectorAll<HTMLElement>(
+        provider ? `[data-consent="${provider}"]` : '[data-consent]',
+      )
+      .forEach(activate);
+  };
+
+  const alwaysLoad = () => {
+    try {
+      return (
+        JSON.parse(localStorage.getItem('ndt_prefs') || '{}').embeds === 'allow'
+      );
+    } catch {
+      return false;
+    }
+  };
+
+  const sync = () => {
+    if (alwaysLoad()) activateProvider();
+  };
+  // On every page (also after a soft page switch, see src/lib/router.ts).
+  const init = () => {
+    document.querySelectorAll<HTMLElement>('[data-consent]').forEach((root) => {
+      if (root.dataset.bound) return;
+      root.dataset.bound = '1';
+      root
+        .querySelector('[data-consent-load]')
+        ?.addEventListener('click', () =>
+          activateProvider(root.dataset.consent),
+        );
+    });
+    sync();
+  };
+  init();
+  document.addEventListener('ndt:page', init);
+  window.addEventListener('ndt:preferences', sync);
+</script>

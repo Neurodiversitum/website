@@ -1,0 +1,22 @@
+---
+// One section per screen (src/lib/sections.ts). Children are `Section` components; the dots on
+// the right are built by the script from the section labels.
+import { dict } from '@/data/copy';
+import { asLanguage, copyText } from '@/lib/i18n';
+
+interface Props {
+  /** Index of the section on screen when the page opens (for example after a form post). */
+  start?: number;
+}
+const { start = 0 } = Astro.props;
+const label = copyText(
+  dict,
+  asLanguage(Astro.currentLocale),
+  'common.sections',
+);
+---
+
+<div class="sections" data-start={start || undefined}>
+  <slot />
+</div>
+<nav class="dots glass" aria-label={label} hidden></nav>

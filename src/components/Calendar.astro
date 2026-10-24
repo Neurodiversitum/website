@@ -1,0 +1,95 @@
+---
+// A month calendar for the events page: the current month in Munich, today marked, days with an
+// event marked and linked to the event below. The arrows move between months in the browser;
+// without JavaScript the current month stays visible.
+import { dict } from '@/data/copy';
+import { asLanguage, copyText } from '@/lib/i18n';
+import { todayInMunich } from '@/lib/content';
+
+interface Props {
+  /** One entry per event day: the day (YYYY-MM-DD), the title and the anchor of the event. */
+  days: Array<{ day: string; title: string; id: string }>;
+}
+const { days } = Astro.props;
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const locale = lang === 'de' ? 'de-DE' : 'en-GB';
+const today = todayInMunich();
+const [y, m] = today.split('-').map(Number);
+const first = new Date(Date.UTC(y, m - 1, 1));
+const lead = (first.getUTCDay() + 6) % 7; // Monday first
+const count = new Date(Date.UTC(y, m, 0)).getUTCDate();
+const pad = (n: number) => String(n).padStart(2, '0');
+const cells = Array.from(
+  { length: Math.ceil((lead + count) / 7) * 7 },
+  (_, i) => {
+    const d = i - lead + 1;
+    return d >= 1 && d <= count ? `${y}-${pad(m)}-${pad(d)}` : '';
+  },
+);
+const byDay = new Map(days.map((d) => [d.day, d]));
+const monthName = new Intl.DateTimeFormat(locale, {
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+}).format(first);
+const weekdays = Array.from({ length: 7 }, (_, i) =>
+  new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' }).format(
+    new Date(Date.UTC(2024, 0, 1 + i)),
+  ),
+);
+---
+
+<div
+  class="cal"
+  data-cal
+  data-locale={locale}
+  data-today={today}
+  data-month={`${y}-${pad(m)}`}
+  data-days={JSON.stringify(days)}
+  data-build
+  style="--i:1"
+>
+  <div class="cal-head">
+    <button
+      class="icon-btn"
+      type="button"
+      data-cal-step="-1"
+      aria-label={t('events.calendarPrev')}
+    >
+      <span aria-hidden="true">←</span>
+    </button>
+    <h3 class="cal-month" aria-live="polite" data-cal-title>
+      {monthName}
+    </h3>
+    <button
+      class="icon-btn"
+      type="button"
+      data-cal-step="1"
+      aria-label={t('events.calendarNext')}
+    >
+      <span aria-hidden="true">→</span>
+    </button>
+  </div>
+  <div class="cal-grid" data-cal-grid>
+    {weekdays.map((w) => (
+      <span class="cal-wd">{w}</span>
+    ))}
+    {cells.map((day) => {
+      const ev = day ? byDay.get(day) : undefined;
+      if (!day) return <span class="cal-day empty" aria-hidden="true"></span>;
+      const n = Number(day.slice(8));
+      return ev ? (
+        <a
+          class:list={['cal-day', 'has', { today: day === today }]}
+          href={`#${ev.id}`}
+          title={ev.title}
+        >
+          {n}
+        </a>
+      ) : (
+        <span class:list={['cal-day', { today: day === today }]}>{n}</span>
+      );
+    })}
+  </div>
+</div>

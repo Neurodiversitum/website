@@ -1,0 +1,11 @@
+---
+import Board from '@/views/members/Board.astro';
+import { handleBoard } from '@/lib/members/handlers';
+
+export const prerender = false;
+
+const state = await handleBoard(Astro);
+if (state instanceof Response) return state;
+---
+
+<Board state={state} />

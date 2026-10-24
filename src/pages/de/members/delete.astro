@@ -1,0 +1,11 @@
+---
+import Delete from '@/views/members/Delete.astro';
+import { handleDelete } from '@/lib/members/handlers';
+
+export const prerender = false;
+
+const state = await handleDelete(Astro);
+if (state instanceof Response) return state;
+---
+
+<Delete state={state} />

@@ -1,0 +1,10 @@
+---
+import Directory from '@/views/members/Directory.astro';
+import { handleDirectory } from '@/lib/members/handlers';
+
+export const prerender = false;
+
+const state = await handleDirectory(Astro);
+---
+
+<Directory state={state} />

@@ -1,0 +1,77 @@
+---
+// One project: the head with a back link, the overview as a text column, the goals as a
+// numbered list, the idea wall at the end.
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Page from '@/components/Page.astro';
+import PageHead from '@/components/PageHead.astro';
+import Block from '@/components/Block.astro';
+import PageEnd from '@/components/PageEnd.astro';
+import T from '@/components/T.astro';
+import Link from '@/components/Link.astro';
+import { dict } from '@/data/copy';
+import { projectDetails } from '@/data/site';
+import { getProjects, localized } from '@/lib/content';
+import { asLanguage, copyText } from '@/lib/i18n';
+
+interface Props {
+  slug: keyof typeof projectDetails;
+}
+const { slug } = Astro.props;
+const key = projectDetails[slug];
+const lang = asLanguage(Astro.currentLocale);
+const base = `projectDetail.${key}`;
+const t = (path: string) => copyText(dict, lang, path);
+const project = getProjects().find((entry) => entry.slug === slug);
+const title = project ? localized(project.title, lang) : t(`${base}.title`);
+const goals = dict.projectDetail[key].goals;
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<BaseLayout
+  title={title}
+  description={t(`${base}.overview`)}
+  active="projects"
+  headImage={slug}
+>
+  <Page>
+    <PageHead
+      section="projectDetail"
+      titleText={title}
+      sub={`${key}.sub`}
+      media={slug}
+    >
+      <Link class="back-link" href="/projects" slot="before">
+        <span aria-hidden="true">←</span>
+        <T section="projectDetail" name="back" />
+      </Link>
+    </PageHead>
+
+    <Block title="projectDetail.overviewLabel" sub="projectDetail.overviewSub">
+      <figure class="quote-col" data-build style="--i:1">
+        <T path={`${base}.overviewBoxLabel`} as="figcaption" />
+        <T path={`${base}.overview`} as="p" />
+      </figure>
+    </Block>
+
+    <Block title="projectDetail.goalsLabel" sub="projectDetail.goalsSub">
+      <ol class="steps-list">
+        {goals.map((_, index) => (
+          <li data-build style={`--i:${(index % 2) + 1}`}>
+            <span class="num">{pad(index + 1)}</span>
+            <div>
+              <T path={`${base}.goals.${index}.title`} as="h3" />
+              <T path={`${base}.goals.${index}.body`} as="p" />
+            </div>
+          </li>
+        ))}
+      </ol>
+    </Block>
+
+    <PageEnd
+      title="projects.ctaTitle"
+      body="projects.ctaBody"
+      button="projects.ctaBtn"
+      href="/ideas"
+    />
+  </Page>
+</BaseLayout>

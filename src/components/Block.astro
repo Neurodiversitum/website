@@ -1,0 +1,19 @@
+---
+// One part of an inner page that scrolls like a document: the heading with its subline on one
+// line, then the content in the form that suits it (list, timeline, text column, profiles).
+// Its parts build in once when they scroll into view (src/lib/reveal.ts).
+import HeadRow from './HeadRow.astro';
+
+interface Props {
+  title: string;
+  sub?: string;
+  subText?: string;
+  class?: string;
+}
+const { title, sub, subText, class: className } = Astro.props;
+---
+
+<section class:list={['block', className]}>
+  <HeadRow title={title} sub={sub} subText={subText} />
+  <slot />
+</section>

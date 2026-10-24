@@ -1,0 +1,34 @@
+---
+// One screen of a page. `label` names the section for the dots; `bare` leaves out the content
+// width wrapper (the hero); `foot` adds the legal links at the bottom (the last section).
+import Footer from './Footer.astro';
+
+interface Props {
+  label: string;
+  class?: string;
+  bare?: boolean;
+  foot?: boolean;
+  first?: boolean;
+}
+const {
+  label,
+  class: className,
+  bare = false,
+  foot = false,
+  first = false,
+} = Astro.props;
+---
+
+<section
+  class:list={['sec', className, { on: first, built: first }]}
+  data-label={label}
+>
+  {bare ? (
+    <slot />
+  ) : (
+    <div class="sec-inner">
+      <slot />
+    </div>
+  )}
+  {foot && <Footer />}
+</section>

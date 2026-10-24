@@ -1,0 +1,94 @@
+---
+// Sign-in by email link. The same calm answer for known and unknown addresses.
+import MemberShell from '@/components/members/MemberShell.astro';
+import T from '@/components/T.astro';
+import Link from '@/components/Link.astro';
+import { dict } from '@/data/copy';
+import { asLanguage, copyText } from '@/lib/i18n';
+import type { LoginState } from '@/lib/members/handlers';
+
+interface Props {
+  state: LoginState;
+}
+const {
+  state: { state, error, email },
+} = Astro.props;
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+---
+
+<MemberShell title="loginTitle" sub="loginSub" nav={false}>
+  <div class="form">
+    {!Astro.locals.configured ? (
+      <div class="notice">
+        <p>
+          <strong>
+            <T section="members" name="notConfiguredTitle" />
+          </strong>
+        </p>
+        <p>
+          <T section="members" name="notConfiguredBody" />
+        </p>
+      </div>
+    ) : state === 'sent' ? (
+      <div class="notice" role="status">
+        <p>
+          <strong>
+            <T section="members" name="sentTitle" />
+          </strong>
+        </p>
+        <p>
+          <T section="members" name="sentBody" />
+        </p>
+      </div>
+    ) : (
+      <>
+        <T section="members" name="loginBody" as="p" class="lede" />
+        {error && (
+          <div class="notice error" role="alert">
+            <p>{t(`members.${error}`)}</p>
+          </div>
+        )}
+        <form method="post">
+          <div
+            class:list={[
+              'field',
+              {
+                invalid:
+                  error === 'errorEmail' || error === 'errorUniversityEmail',
+              },
+            ]}
+          >
+            <label for="email">
+              <T section="members" name="email" />
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autocomplete="email"
+              autofocus
+              value={email}
+              aria-describedby="email-hint"
+            />
+            <p class="help" id="email-hint">
+              <T section="members" name="emailHint" />
+            </p>
+          </div>
+          <div class="form-actions">
+            <button class="btn primary small" type="submit">
+              <T section="members" name="sendLink" />
+            </button>
+          </div>
+        </form>
+      </>
+    )}
+    <p class="help after">
+      <T section="members" name="noAccount" />{' '}
+      <Link href="/join">
+        <T section="members" name="joinLink" />
+      </Link>
+    </p>
+  </div>
+</MemberShell>

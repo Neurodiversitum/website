@@ -1,0 +1,11 @@
+---
+import Register from '@/views/members/Register.astro';
+import { handleRegister } from '@/lib/members/handlers';
+
+export const prerender = false;
+
+const state = await handleRegister(Astro);
+if (state instanceof Response) return state;
+---
+
+<Register state={state} />

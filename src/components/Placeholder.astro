@@ -1,0 +1,52 @@
+---
+// A drawn stand-in for a page without a fitting image: the club's orbits, a dot grid or soft waves,
+// in the site's own colours. Static. Decorative only (aria-hidden).
+interface Props {
+  pattern?: 'orbits' | 'grid' | 'waves';
+}
+const { pattern = 'orbits' } = Astro.props;
+const dots = Array.from({ length: 11 * 6 }, (_, i) => [
+  60 + (i % 11) * 56,
+  60 + Math.floor(i / 11) * 60,
+]);
+---
+
+<svg
+  class="placeholder"
+  viewBox="0 0 640 360"
+  role="presentation"
+  aria-hidden="true"
+  focusable="false"
+>
+  <rect width="640" height="360" fill="var(--paper-2)"></rect>
+  {pattern === 'orbits' && (
+    <g
+      fill="none"
+      stroke="var(--accent)"
+      stroke-width="1.2"
+      opacity="0.55"
+      transform="translate(320 180)"
+    >
+      <ellipse rx="230" ry="80" />
+      <ellipse rx="230" ry="80" transform="rotate(60)" />
+      <ellipse rx="230" ry="80" transform="rotate(120)" />
+      <circle r="22" fill="var(--accent)" stroke="none" opacity="0.9" />
+    </g>
+  )}
+  {pattern === 'grid' && (
+    <g fill="var(--accent)" opacity="0.5">
+      {dots.map(([x, y]) => (
+        <circle cx={x} cy={y} r="3" />
+      ))}
+    </g>
+  )}
+  {pattern === 'waves' && (
+    <g fill="none" stroke="var(--accent)" stroke-width="1.2" opacity="0.5">
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <path
+          d={`M-20 ${120 + i * 28} C 140 ${80 + i * 28}, 260 ${180 + i * 28}, 420 ${120 + i * 28} S 620 ${100 + i * 28}, 680 ${150 + i * 28}`}
+        />
+      ))}
+    </g>
+  )}
+</svg>

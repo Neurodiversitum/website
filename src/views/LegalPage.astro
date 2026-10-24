@@ -1,0 +1,56 @@
+---
+// Shared layout of the legal pages (Imprint, Privacy policy, Cookies): a plain page that scrolls,
+// heading, intro, titled blocks, the legal links at the end.
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Footer from '@/components/Footer.astro';
+import T from '@/components/T.astro';
+import { dict } from '@/data/copy';
+import { asLanguage, copyText } from '@/lib/i18n';
+
+interface Props {
+  section: 'imprint' | 'privacy' | 'cookies';
+  /** Copy key pairs: title and body of each block. `pre` keeps line breaks (addresses). */
+  blocks: ReadonlyArray<{
+    title: string;
+    body: string;
+    pre?: boolean;
+    note?: string;
+  }>;
+  /** Copy key of a "last updated" line under the heading. */
+  updated?: string;
+}
+const { section, blocks, updated } = Astro.props;
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+---
+
+<BaseLayout
+  title={t(`meta.${section}`)}
+  description={t(`meta.${section}Description`)}
+>
+  <article class="page legal">
+    <div class="wrap narrow">
+      <T section={section} name="heading" as="h1" />
+      <T section={section} name="headingSub" as="p" class="page-lede" />
+      {updated && <T section={section} name={updated} as="p" class="updated" />}
+      <T section={section} name="intro" as="p" class="intro" />
+      {blocks.map((block) => (
+        <div class="block">
+          <T section={section} name={block.title} as="h2" />
+          <T
+            section={section}
+            name={block.body}
+            as="p"
+            class={block.pre ? 'pre' : undefined}
+          />
+          {block.note && (
+            <T section={section} name={block.note} as="p" class="note" />
+          )}
+        </div>
+      ))}
+    </div>
+    <div class="wrap">
+      <Footer />
+    </div>
+  </article>
+</BaseLayout>

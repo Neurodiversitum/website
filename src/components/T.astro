@@ -1,0 +1,31 @@
+---
+// Renders one copy field in the page's language. Either `section` + `name` or a dot `path`.
+// The `data-copy` attribute lets the browser swap in the easy-read variant when the visitor asks for it.
+// Other attributes (`data-build`, `style`) pass through to the element.
+import { dict } from '@/data/copy';
+import { asLanguage, pick, resolveCopy } from '@/lib/i18n';
+
+interface Props {
+  section?: keyof typeof dict;
+  name?: string;
+  path?: string;
+  as?: keyof HTMLElementTagNameMap;
+  class?: string;
+  [attribute: string]: unknown;
+}
+
+const {
+  section,
+  name,
+  path,
+  as: Tag = 'span',
+  class: className,
+  ...rest
+} = Astro.props;
+const copyPath = path ?? `${String(section)}.${name}`;
+const text = pick(resolveCopy(dict, copyPath), asLanguage(Astro.currentLocale));
+---
+
+<Tag class={className} data-copy={copyPath} {...rest}>
+  {text}
+</Tag>

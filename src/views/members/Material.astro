@@ -1,0 +1,144 @@
+---
+// Member-only material: list with downloads for every member, upload and delete for the board.
+import MemberShell from '@/components/members/MemberShell.astro';
+import T from '@/components/T.astro';
+import { dict } from '@/data/copy';
+import { asLanguage, copyText } from '@/lib/i18n';
+import {
+  formatBytes,
+  MATERIAL_MAX_BYTES,
+  MATERIAL_TYPES,
+} from '@/lib/members/files';
+import type { MaterialState } from '@/lib/members/handlers';
+
+interface Props {
+  state: MaterialState;
+}
+const {
+  state: { items, canManage, result, values },
+} = Astro.props;
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const day = new Intl.DateTimeFormat(lang === 'de' ? 'de-DE' : 'en-GB', {
+  dateStyle: 'medium',
+  timeZone: 'Europe/Berlin',
+});
+const resultKey: Record<string, string> = {
+  uploaded: 'materialUploaded',
+  deleted: 'materialDeleted',
+  title: 'materialErrTitle',
+  file: 'materialErrFile',
+  type: 'materialErrType',
+  size: 'materialErrSize',
+  noStorage: 'materialErrStorage',
+};
+const isError = result && result !== 'uploaded' && result !== 'deleted';
+const accept = Object.keys(MATERIAL_TYPES)
+  .map((extension) => `.${extension}`)
+  .join(',');
+---
+
+<MemberShell title="materialTitle" sub="materialSub" active="material">
+  <div class="form wide">
+    <T section="members" name="materialIntro" as="p" class="lede" />
+    {result && (
+      <div
+        class:list={['notice', { error: isError }]}
+        role={isError ? 'alert' : 'status'}
+      >
+        <p>{t(`members.${resultKey[result]}`)}</p>
+      </div>
+    )}
+    {items.length === 0 ? (
+      <p class="help">
+        <T section="members" name="materialEmpty" />
+      </p>
+    ) : (
+      <ul class="rows">
+        {items.map((item) => (
+          <li class="row">
+            <div class="row-text">
+              <h2>{item.title}</h2>
+              {item.description && <p>{item.description}</p>}
+              <p class="help">
+                {item.file_name} · {formatBytes(item.size, lang)} ·{' '}
+                {day.format(new Date(item.created_at))} ·{' '}
+                {t('members.materialBy')} {item.uploaded_by}
+              </p>
+            </div>
+            <div class="row-actions">
+              <a class="btn small" href={`/api/members/material/${item.id}`}>
+                <T section="members" name="materialDownload" />
+              </a>
+              {canManage && (
+                <form method="post">
+                  <input type="hidden" name="action" value="delete" />
+                  <input type="hidden" name="id" value={item.id} />
+                  <button class="link-button" type="submit">
+                    <T section="members" name="materialDelete" />
+                  </button>
+                </form>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    {canManage && (
+      <form method="post" enctype="multipart/form-data" class="sub-section">
+        <h2 class="sub-title">
+          <T section="members" name="materialUploadTitle" />
+        </h2>
+        <div class:list={['field', { invalid: result === 'title' }]}>
+          <label for="title">
+            <T section="members" name="materialName" />
+          </label>
+          <input
+            id="title"
+            name="title"
+            type="text"
+            required
+            maxlength="120"
+            value={values.title}
+          />
+        </div>
+        <div class="field">
+          <label for="description">
+            <T section="members" name="materialDescription" />
+          </label>
+          <input
+            id="description"
+            name="description"
+            type="text"
+            maxlength="500"
+            value={values.description}
+          />
+        </div>
+        <div
+          class:list={[
+            'field',
+            {
+              invalid:
+                result === 'file' || result === 'type' || result === 'size',
+            },
+          ]}
+        >
+          <label for="file">
+            <T section="members" name="materialFile" />
+          </label>
+          <input id="file" name="file" type="file" required accept={accept} />
+          <p class="help">
+            {t('members.materialFileHelp')}{' '}
+            {formatBytes(MATERIAL_MAX_BYTES, lang)}.
+          </p>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary small" type="submit">
+            <T section="members" name="materialUpload" />
+          </button>
+        </div>
+      </form>
+    )}
+  </div>
+</MemberShell>

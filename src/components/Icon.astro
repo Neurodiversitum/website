@@ -1,0 +1,29 @@
+---
+// Small line icon. `path` holds one or more SVG path data strings separated by "|".
+// With `fill`, the icon is drawn filled instead of stroked.
+interface Props {
+  path: string;
+  size?: number;
+  fill?: boolean;
+  class?: string;
+}
+const { path, size = 22, fill = false, class: className } = Astro.props;
+const paths = path.split('|');
+---
+
+<svg
+  class={className}
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill={fill ? 'currentColor' : 'none'}
+  stroke={fill ? 'none' : 'currentColor'}
+  stroke-width="1.6"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+>
+  {paths.map((d) => (
+    <path d={d} />
+  ))}
+</svg>

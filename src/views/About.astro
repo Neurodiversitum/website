@@ -1,0 +1,157 @@
+---
+// About neurodiversity: a page that reads like an essay. The idea as a text column with three
+// points, the origin of the term as a quote column, the conditions as a glossary, the talks,
+// and the places to get support as a list of links.
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Page from '@/components/Page.astro';
+import PageHead from '@/components/PageHead.astro';
+import Block from '@/components/Block.astro';
+import PageEnd from '@/components/PageEnd.astro';
+import Icon from '@/components/Icon.astro';
+import ConsentEmbed from '@/components/ConsentEmbed.astro';
+import T from '@/components/T.astro';
+import { dict } from '@/data/copy';
+import { resources, videos } from '@/data/site';
+import { asLanguage, copyText } from '@/lib/i18n';
+
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const concepts = [
+  ['card1', 'M4 12c2-4 4-6 4-6s2 5 4 5 2-8 4-8 2 9 4 9 2-3 4-3'],
+  [
+    'card2',
+    'M12 3l1.8 5.6H19l-4.6 3.4 1.8 5.6L12 14.2 7.8 17.6l1.8-5.6L5 8.6h5.2z',
+  ],
+  ['card3', 'M4 20V10m5.5 10V6m5.5 14v-8m5.5 8v-4'],
+] as const;
+const conditions = [
+  'autism',
+  'adhd',
+  'dyslexia',
+  'dyspraxia',
+  'tourette',
+  'ocd',
+] as const;
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<BaseLayout
+  title={t('meta.about')}
+  description={t('meta.aboutDescription')}
+  active="about"
+  headImage="about"
+>
+  <Page>
+    <PageHead section="about" sub="heroSub" media="about" />
+
+    <Block title="about.introTitle" sub="about.introSub">
+      <div class="essay">
+        <T
+          section="about"
+          name="title"
+          as="p"
+          class="essay-lead"
+          data-build
+          style="--i:1"
+        />
+        <T
+          section="about"
+          name="body"
+          as="p"
+          class="essay-body"
+          data-build
+          style="--i:2"
+        />
+      </div>
+      <ul class="points">
+        {concepts.map(([key, icon], index) => (
+          <li data-build style={`--i:${index + 1}`}>
+            <Icon path={icon} class="icon" />
+            <T section="about" name={`${key}Title`} as="h3" />
+            <T section="about" name={`${key}Body`} as="p" />
+          </li>
+        ))}
+      </ul>
+    </Block>
+
+    <Block title="about.historyTitle" sub="about.historySub">
+      <figure class="quote-col" data-build style="--i:1">
+        <T section="about" name="historyBoxLabel" as="figcaption" />
+        <T section="about" name="historyBody" as="p" />
+      </figure>
+    </Block>
+
+    <Block title="about.conditionsTitle" sub="about.conditionsSub">
+      <T
+        section="about"
+        name="conditionsIntro"
+        as="p"
+        class="block-lede"
+        data-build
+        style="--i:1"
+      />
+      <dl class="glossary">
+        {conditions.map((key, index) => (
+          <div data-build style={`--i:${(index % 2) + 1}`}>
+            <dt>
+              <span class="num">{pad(index + 1)}</span>
+              <T section="about" name={`${key}Title`} />
+            </dt>
+            <T section="about" name={`${key}Body`} as="dd" />
+          </div>
+        ))}
+      </dl>
+    </Block>
+
+    <Block title="about.videoTitle" sub="about.videoSub">
+      <div class="video-grid">
+        {videos.map((video, index) => (
+          <article class="video-card" data-build style={`--i:${index + 1}`}>
+            <div class="video-frame">
+              <ConsentEmbed provider="youtube">
+                <iframe
+                  data-src={`https://www.youtube-nocookie.com/embed/${video.id}`}
+                  title={video.title}
+                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+              </ConsentEmbed>
+            </div>
+            <T section="about" name={video.credit} as="p" class="credit" />
+          </article>
+        ))}
+      </div>
+    </Block>
+
+    <Block title="about.resourcesTitle" sub="about.resourcesSub">
+      <ul class="link-list">
+        {resources.map((resource, index) => (
+          <li data-build style={`--i:${index + 1}`}>
+            <a href={resource.url} target="_blank" rel="noopener">
+              <span class="res-mark" aria-hidden="true">
+                {new URL(resource.url).hostname.replace(/^www\./, '')[0]}
+              </span>
+              <div class="link-text">
+                <T section="about" name={`${resource.key}Title`} as="h3" />
+                <T section="about" name={`${resource.key}Body`} as="p" />
+              </div>
+              <span class="host">
+                {new URL(resource.url).hostname.replace(/^www\./, '')}
+                <span class="arrow" aria-hidden="true">
+                  ↗
+                </span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </Block>
+
+    <PageEnd
+      title="about.boxTitle"
+      body="about.boxBody"
+      button="about.boxCta"
+      href="/projects"
+    />
+  </Page>
+</BaseLayout>

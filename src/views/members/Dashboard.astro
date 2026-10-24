@@ -1,0 +1,68 @@
+---
+// Overview after sign-in.
+import MemberShell from '@/components/members/MemberShell.astro';
+import T from '@/components/T.astro';
+import Link from '@/components/Link.astro';
+import { dict } from '@/data/copy';
+import { asLanguage, copyText } from '@/lib/i18n';
+
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const member = Astro.locals.member!;
+const since = new Intl.DateTimeFormat(lang === 'de' ? 'de-DE' : 'en-GB', {
+  dateStyle: 'long',
+  timeZone: 'Europe/Berlin',
+}).format(new Date(member.created_at));
+const roleKey = `role${member.role.charAt(0).toUpperCase()}${member.role.slice(1)}`;
+const cards = [
+  {
+    title: 'cardProfileTitle',
+    body: 'cardProfileBody',
+    href: '/members/profile',
+  },
+  {
+    title: 'cardDataTitle',
+    body: 'cardDataBody',
+    href: '/members/profile#data',
+  },
+  {
+    title: 'cardEventsTitle',
+    body: 'cardEventsBody',
+    href: '/members/events',
+  },
+  {
+    title: 'cardDirectoryTitle',
+    body: 'cardDirectoryBody',
+    href: '/members/directory',
+  },
+  {
+    title: 'cardMaterialTitle',
+    body: 'cardMaterialBody',
+    href: '/members/material',
+  },
+] as const;
+---
+
+<MemberShell title="navOverview" sub="overviewSub" active="overview">
+  <p class="member-meta">
+    <T section="members" name="welcome" /> {member.name} ·{' '}
+    <T section="members" name="memberSince" /> {since} ·{' '}
+    {t(`members.${roleKey}`)}
+  </p>
+  <T section="members" name="overviewBody" as="p" class="lede" />
+  <div class="member-grid">
+    {cards.map((card) => (
+      <article class="card">
+        <h2>
+          <T section="members" name={card.title} />
+        </h2>
+        <p>
+          <T section="members" name={card.body} />
+        </p>
+        <Link class="btn small" href={card.href}>
+          <T section="members" name="open" />
+        </Link>
+      </article>
+    ))}
+  </div>
+</MemberShell>

@@ -1,0 +1,76 @@
+---
+// Frame of every member page: page head with the member navigation and sign-out, then the content.
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import T from '@/components/T.astro';
+import Link from '@/components/Link.astro';
+import Footer from '@/components/Footer.astro';
+import { dict } from '@/data/copy';
+import { asLanguage, copyText } from '@/lib/i18n';
+import { isBoard } from '@/lib/members/roles';
+
+interface Props {
+  /** Copy key in `dict.members` for the page title. */
+  title: string;
+  sub?: string;
+  active?: string;
+  /** Pages without a session (login, verify) show no member navigation. */
+  nav?: boolean;
+}
+const { title, sub, active = '', nav = true } = Astro.props;
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const member = Astro.locals.member;
+const links: ReadonlyArray<readonly [string, string, string]> = [
+  ['navOverview', '/members', 'overview'],
+  ['navEvents', '/members/events', 'events'],
+  ['navDirectory', '/members/directory', 'directory'],
+  ['navMaterials', '/members/material', 'material'],
+  ['navProfile', '/members/profile', 'profile'],
+  ...(isBoard(member?.role)
+    ? [['navBoard', '/members/board', 'board'] as const]
+    : []),
+];
+---
+
+<BaseLayout
+  title={`${t(`members.${title}`)} · ${t('members.area')}`}
+  description={t('members.areaDescription')}
+  hideJoin
+>
+  <div class="page member-page">
+    <div class="member-head">
+      <div class="wrap">
+        <T section="members" name={title} as="h1" />
+        {sub && <T section="members" name={sub} as="p" class="sub" />}
+        {nav && member && (
+          <div class="member-bar">
+            <nav class="member-nav" aria-label={t('members.memberNav')}>
+              {links.map(([key, href, id]) => (
+                <Link
+                  href={href}
+                  aria-current={active === id ? 'page' : undefined}
+                >
+                  <T section="members" name={key} />
+                </Link>
+              ))}
+            </nav>
+            <form method="post" action="/api/members/logout">
+              <input type="hidden" name="lang" value={lang} />
+              <button type="submit">
+                <T section="members" name="logout" />
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
+    </div>
+    <section class="member-content">
+      <div class="wrap">
+        <slot />
+      </div>
+    </section>
+    <div class="wrap">
+      <Footer />
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,82 @@
+---
+// Team: the core team from Notion as profiles, portrait beside name, role, words and link; the
+// way to join at the end.
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Page from '@/components/Page.astro';
+import PageHead from '@/components/PageHead.astro';
+import Block from '@/components/Block.astro';
+import PageEnd from '@/components/PageEnd.astro';
+import Icon from '@/components/Icon.astro';
+import { dict } from '@/data/copy';
+import { getTeam, initials, localized } from '@/lib/content';
+import { asLanguage, copyText } from '@/lib/i18n';
+
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const team = getTeam();
+const linkedin =
+  'M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.22 8h4.56v14H.22V8zm7.44 0h4.37v1.92h.06c.61-1.15 2.1-2.37 4.32-2.37 4.62 0 5.47 3.04 5.47 7v7.45h-4.56v-6.6c0-1.58-.03-3.6-2.2-3.6-2.2 0-2.53 1.72-2.53 3.49v6.71H8.66V8z';
+---
+
+<BaseLayout
+  title={t('meta.team')}
+  description={t('meta.teamDescription')}
+  active="team"
+  headImage="team"
+>
+  <Page>
+    <PageHead section="team" media="team" />
+
+    <Block title="team.boardTitle" sub="team.boardSub">
+      <ul class="profiles">
+        {team.map((person) => (
+          <li class="person" data-build style="--i:1">
+            <div class="portrait">
+              {person.photo ? (
+                <img
+                  src={person.photo}
+                  alt={person.name}
+                  width="480"
+                  height="600"
+                  loading="lazy"
+                />
+              ) : (
+                <span class="initials" aria-hidden="true">
+                  {initials(person.name)}
+                </span>
+              )}
+            </div>
+            <div class="person-text">
+              <h3>{person.name}</h3>
+              <p class="role">{localized(person.role, lang)}</p>
+              {localized(person.bio, lang) && (
+                <p class="bio">{localized(person.bio, lang)}</p>
+              )}
+              {person.linkedin && (
+                <a
+                  class="social-link"
+                  href={person.linkedin}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  <Icon path={linkedin} size={14} fill />
+                  LinkedIn
+                  <span class="sr-only">
+                    {person.name} {t('team.onLinkedin')}
+                  </span>
+                </a>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </Block>
+
+    <PageEnd
+      title="team.contactTitle"
+      body="team.body"
+      button="home.joinCta"
+      join
+    />
+  </Page>
+</BaseLayout>

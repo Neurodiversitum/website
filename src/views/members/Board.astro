@@ -1,0 +1,144 @@
+---
+// Board view: every member with all profile fields, CSV export, role management for admins.
+import MemberShell from '@/components/members/MemberShell.astro';
+import T from '@/components/T.astro';
+import Link from '@/components/Link.astro';
+import { dict } from '@/data/copy';
+import { asLanguage, copyText } from '@/lib/i18n';
+import { ROLES } from '@/lib/members/roles';
+import type { BoardState } from '@/lib/members/handlers';
+
+interface Props {
+  state: BoardState;
+}
+const {
+  state: { members, pendingNotion, isAdmin, roleResult },
+} = Astro.props;
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const day = new Intl.DateTimeFormat(lang === 'de' ? 'de-DE' : 'en-GB', {
+  dateStyle: 'medium',
+  timeZone: 'Europe/Berlin',
+});
+const yesNo = (value: number) => t(value === 1 ? 'members.yes' : 'members.no');
+const label = (prefix: string, value: string | null) =>
+  value
+    ? t(
+        `members.${prefix}${value
+          .split('_')
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join('')}`,
+      )
+    : '';
+const roleResultKey =
+  roleResult === 'saved'
+    ? 'roleSaved'
+    : roleResult === 'lastAdmin'
+      ? 'roleLastAdmin'
+      : roleResult === 'unknownRole'
+        ? 'roleUnknown'
+        : roleResult === 'notFound'
+          ? 'roleNotFound'
+          : '';
+---
+
+<MemberShell title="boardTitle" sub="boardSub" active="board">
+  <div class="form wide">
+    <T section="members" name="boardIntro" as="p" class="lede" />
+    <p class="member-meta">
+      {members.length}{' '}
+      {t(
+        members.length === 1
+          ? 'members.memberCountOne'
+          : 'members.membersCount',
+      )}{' '}
+      ·{' '}
+      {pendingNotion > 0
+        ? `${t('members.notionPending')} ${pendingNotion}`
+        : t('members.notionOk')}
+    </p>
+    <div class="form-actions top">
+      <a class="btn small" href="/api/members/board/members.csv">
+        <T section="members" name="exportMembers" />
+      </a>
+      <Link class="btn small" href="/members/board/events">
+        <T section="members" name="boardEventsLink" />
+      </Link>
+    </div>
+    {roleResultKey && (
+      <div
+        class:list={['notice', { error: roleResult !== 'saved' }]}
+        role={roleResult === 'saved' ? 'status' : 'alert'}
+      >
+        <p>{t(`members.${roleResultKey}`)}</p>
+      </div>
+    )}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">{t('members.colName')}</th>
+            <th scope="col">{t('members.colEmail')}</th>
+            <th scope="col">{t('members.colUniversity')}</th>
+            <th scope="col">{t('members.colLanguage')}</th>
+            <th scope="col">{t('members.colRole')}</th>
+            <th scope="col">{t('members.colJoined')}</th>
+            <th scope="col">{t('members.colDirectory')}</th>
+            <th scope="col">{t('members.colEventNews')}</th>
+            <th scope="col">{t('members.colNewsletter')}</th>
+            <th scope="col">{t('members.colLinkedin')}</th>
+            <th scope="col">{t('members.colDateOfBirth')}</th>
+            <th scope="col">{t('members.colGender')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {members.map((member) => (
+            <tr>
+              <th scope="row">{member.name}</th>
+              <td>
+                <a href={`mailto:${member.email}`}>{member.email}</a>
+              </td>
+              <td>{member.university}</td>
+              <td>{member.language}</td>
+              <td>
+                {isAdmin ? (
+                  <form method="post" class="inline-form">
+                    <input type="hidden" name="member" value={member.user_id} />
+                    <label>
+                      <span class="sr-only">{t('members.colRole')}</span>
+                      <select name="role">
+                        {ROLES.map((role) => (
+                          <option value={role} selected={member.role === role}>
+                            {label('role', role)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <button class="btn small" type="submit">
+                      <T section="members" name="roleSave" />
+                    </button>
+                  </form>
+                ) : (
+                  label('role', member.role)
+                )}
+              </td>
+              <td>{day.format(new Date(member.created_at))}</td>
+              <td>{yesNo(member.directory_opt_in)}</td>
+              <td>{yesNo(member.mail_events)}</td>
+              <td>{yesNo(member.mail_newsletter)}</td>
+              <td>
+                {member.linkedin && (
+                  <a href={member.linkedin} rel="noopener" target="_blank">
+                    {t('members.linkedinLabel')}
+                  </a>
+                )}
+              </td>
+              <td>{member.date_of_birth ?? ''}</td>
+              <td>{label('gender', member.gender)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</MemberShell>

@@ -1,0 +1,52 @@
+---
+// The head of an inner page: title and lede left, the registry picture (or a clip in the `side`
+// slot) right. Visible at once (the page switch brings it in), so the title paints early.
+// Actions go into the default slot, a back link into `before`.
+import T from './T.astro';
+import MediaImg from './MediaImg.astro';
+import { dict } from '@/data/copy';
+import type { ImageKey } from '@/data/media';
+
+interface Props {
+  section: keyof typeof dict;
+  title?: string;
+  sub?: string;
+  /** Raw title instead of a copy key (project titles from Notion). */
+  titleText?: string;
+  media?: ImageKey;
+}
+const {
+  section,
+  title = 'heading',
+  sub = 'headingSub',
+  titleText,
+  media,
+} = Astro.props;
+const hasSide = Astro.slots.has('side');
+---
+
+<header class:list={['page-head', { 'has-side': hasSide || media }]}>
+  <div class="head-copy">
+    <slot name="before" />
+    {titleText ? (
+      <h1>{titleText}</h1>
+    ) : (
+      <T section={section} name={title} as="h1" />
+    )}
+    <T section={section} name={sub} as="p" class="lede" />
+    {Astro.slots.has('default') && (
+      <div class="actions">
+        <slot />
+      </div>
+    )}
+  </div>
+  {hasSide ? (
+    <slot name="side" />
+  ) : (
+    media && (
+      <figure class="head-pic">
+        <MediaImg name={media} eager sizes="(min-width: 821px) 40vw, 100vw" />
+      </figure>
+    )
+  )}
+</header>

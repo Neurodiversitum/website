@@ -1,0 +1,151 @@
+---
+// Member events: register and cancel, calendar file per event, list of own registrations.
+import MemberShell from '@/components/members/MemberShell.astro';
+import T from '@/components/T.astro';
+import { dict } from '@/data/copy';
+import { asLanguage, copyText } from '@/lib/i18n';
+import { formatEventDate, localized } from '@/lib/content';
+import { registrationDate } from '@/lib/members/events';
+import type { EventsState } from '@/lib/members/handlers';
+
+interface Props {
+  state: EventsState;
+}
+const {
+  state: { events, registrations, registered, flash },
+} = Astro.props;
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const upcomingIds = new Set(events.map((event) => event.id));
+const flashKey =
+  flash === 'registered'
+    ? 'flashRegistered'
+    : flash === 'unregistered'
+      ? 'flashUnregistered'
+      : flash === 'gone'
+        ? 'flashGone'
+        : '';
+---
+
+<MemberShell title="eventsTitle" sub="eventsSub" active="events">
+  <div class="form wide">
+    <T section="members" name="eventsIntro" as="p" class="lede" />
+    {flashKey && (
+      <div class="notice" role="status">
+        <p>{t(`members.${flashKey}`)}</p>
+      </div>
+    )}
+    {events.length === 0 ? (
+      <p class="help">
+        <T section="members" name="noUpcoming" />
+      </p>
+    ) : (
+      <div class="rows">
+        {events.map((event) => {
+          const isRegistered = registered.has(event.id);
+          return (
+            <article class="row">
+              <div class="row-text">
+                {event.date && (
+                  <p class="event-date">{formatEventDate(event.date, lang)}</p>
+                )}
+                <h2>{localized(event.title, lang)}</h2>
+                {event.location && (
+                  <p class="event-location">{event.location}</p>
+                )}
+                {localized(event.summary, lang) && (
+                  <p>{localized(event.summary, lang)}</p>
+                )}
+                {isRegistered && (
+                  <p class="badge">
+                    <T section="members" name="registeredBadge" />
+                  </p>
+                )}
+              </div>
+              <div class="row-actions">
+                <form method="post">
+                  <input type="hidden" name="event" value={event.id} />
+                  <input
+                    type="hidden"
+                    name="action"
+                    value={isRegistered ? 'unregister' : 'register'}
+                  />
+                  <button
+                    class:list={['btn', 'small', { secondary: isRegistered }]}
+                    type="submit"
+                  >
+                    <T
+                      section="members"
+                      name={
+                        isRegistered ? 'unregisterButton' : 'registerButton'
+                      }
+                    />
+                  </button>
+                </form>
+                {event.date && (
+                  <a
+                    class="btn small"
+                    href={`/api/members/ics?event=${encodeURIComponent(event.id)}`}
+                  >
+                    <T section="members" name="calendarLink" />
+                  </a>
+                )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    )}
+
+    <h2 class="sub-title">
+      <T section="members" name="myRegistrationsTitle" />
+    </h2>
+    {registrations.length === 0 ? (
+      <p class="help">
+        <T section="members" name="noRegistrations" />
+      </p>
+    ) : (
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">{t('members.colEvent')}</th>
+              <th scope="col">{t('members.colDate')}</th>
+              <th scope="col">{t('members.colLocation')}</th>
+              <th scope="col">
+                <span class="sr-only">{t('members.colActions')}</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {registrations.map((row) => {
+              const date = registrationDate(row);
+              const upcoming = upcomingIds.has(row.event_id);
+              return (
+                <tr>
+                  <td>
+                    {row.event_title}
+                    {!upcoming && (
+                      <span class="tag">{t('members.pastLabel')}</span>
+                    )}
+                  </td>
+                  <td>{date ? formatEventDate(date, lang) : ''}</td>
+                  <td>{row.event_location ?? ''}</td>
+                  <td class="actions">
+                    {date && (
+                      <a
+                        href={`/api/members/ics?event=${encodeURIComponent(row.event_id)}`}
+                      >
+                        {t('members.calendarShort')}
+                      </a>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+</MemberShell>

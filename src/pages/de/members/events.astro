@@ -1,0 +1,11 @@
+---
+import Events from '@/views/members/Events.astro';
+import { handleEvents } from '@/lib/members/handlers';
+
+export const prerender = false;
+
+const state = await handleEvents(Astro);
+if (state instanceof Response) return state;
+---
+
+<Events state={state} />

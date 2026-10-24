@@ -1,0 +1,27 @@
+---
+import ConsentEmbed from './ConsentEmbed.astro';
+import { forms } from '@/data/site';
+
+interface Props {
+  form: keyof typeof forms;
+  title: string;
+  height?: number;
+}
+const { form, title, height = 320 } = Astro.props;
+const id = forms[form];
+---
+
+<div class="form-card">
+  <ConsentEmbed provider="tally">
+    <iframe
+      data-src={`https://tally.so/embed/${id}?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1`}
+      height={height}
+      title={title}
+    ></iframe>
+  </ConsentEmbed>
+  <noscript>
+    <p>
+      <a href={`https://tally.so/r/${id}`}>tally.so/r/{id}</a>
+    </p>
+  </noscript>
+</div>

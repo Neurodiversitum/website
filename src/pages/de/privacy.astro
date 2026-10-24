@@ -1,0 +1,22 @@
+---
+import LegalPage from '@/views/LegalPage.astro';
+
+const blocks = [
+  'controller',
+  'hosting',
+  'email',
+  'localStorage',
+  'ideaWall',
+  'joinForm',
+  'account',
+  'health',
+  'location',
+  'notion',
+  'retention',
+  'inbox',
+  'videos',
+  'rights',
+].map((key) => ({ title: `${key}Title`, body: `${key}Body`, pre: true }));
+---
+
+<LegalPage section="privacy" blocks={blocks} updated="updated" />

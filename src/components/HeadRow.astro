@@ -1,0 +1,21 @@
+---
+// A section heading: the heading and its subline form one line (`Explore the club Four ways in.`).
+import T from './T.astro';
+
+interface Props {
+  /** Copy paths, for example `home.exploreTitle`. */
+  title: string;
+  sub?: string;
+  /** Raw text instead of a copy path for the subline (generated, for example a count). */
+  subText?: string;
+  i?: number;
+}
+const { title, sub, subText, i = 0 } = Astro.props;
+---
+
+<div class="head-row" data-build style={i ? `--i:${i}` : undefined}>
+  <h2>
+    <T path={title} /> {sub && <T path={sub} class="sub" />}
+    {subText && <span class="sub">{subText}</span>}
+  </h2>
+</div>

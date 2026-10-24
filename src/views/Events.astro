@@ -1,0 +1,118 @@
+---
+// Public events page, as a timeline: day and month on the left, a thin line through the dates,
+// the event to the right. Rendered by the Worker on each visit from the events it loads from
+// Notion (src/lib/events), so a newly published event appears within 10 minutes, without a build.
+import { env } from 'cloudflare:workers';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Page from '@/components/Page.astro';
+import PageHead from '@/components/PageHead.astro';
+import Block from '@/components/Block.astro';
+import PageEnd from '@/components/PageEnd.astro';
+import T from '@/components/T.astro';
+import Link from '@/components/Link.astro';
+import { dict } from '@/data/copy';
+import { asLanguage, copyText } from '@/lib/i18n';
+import { formatEventDate, localized } from '@/lib/content';
+import { listUpcomingEvents } from '@/lib/events/store';
+
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const events = await listUpcomingEvents(env);
+const locale = lang === 'de' ? 'de-DE' : 'en-GB';
+const part = (
+  iso: string,
+  isDatetime: boolean,
+  options: Intl.DateTimeFormatOptions,
+) =>
+  new Intl.DateTimeFormat(locale, {
+    ...options,
+    timeZone: isDatetime ? 'Europe/Berlin' : 'UTC',
+  }).format(new Date(iso));
+---
+
+<BaseLayout
+  title={t('meta.events')}
+  description={t('meta.eventsDescription')}
+  active="events"
+  headImage="events"
+>
+  <Page>
+    <PageHead section="events" media="events" />
+
+    <Block title="events.upcomingTitle" sub="events.upcomingSub">
+      {events.length === 0 ? (
+        <div class="empty" data-build style="--i:1">
+          <T section="common" name="comingSoonTitle" as="h3" />
+          <T section="common" name="comingSoonBody" as="p" />
+        </div>
+      ) : (
+        <ol class="timeline">
+          {events.map((event) => {
+            const date = event.date!;
+            return (
+              <li
+                class="moment"
+                id={`event-${event.id}`}
+                data-build
+                style="--i:1"
+              >
+                <div class="when" aria-hidden="true">
+                  <span class="day">
+                    {part(date.start, date.isDatetime, { day: 'numeric' })}
+                  </span>
+                  <span class="month">
+                    {part(date.start, date.isDatetime, { month: 'short' })}
+                  </span>
+                </div>
+                <article class="event">
+                  {event.image && (
+                    <div class="event-image">
+                      <img
+                        src={event.image}
+                        alt=""
+                        width="640"
+                        height="360"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  <div class="event-text">
+                    <p class="event-date">{formatEventDate(date, lang)}</p>
+                    <h3>{localized(event.title, lang)}</h3>
+                    {event.location && (
+                      <p class="event-location">{event.location}</p>
+                    )}
+                    {localized(event.summary, lang) && (
+                      <p>{localized(event.summary, lang)}</p>
+                    )}
+                    {event.registrationLink ? (
+                      <a
+                        class="btn small"
+                        href={event.registrationLink}
+                        target="_blank"
+                        rel="noopener"
+                      >
+                        <T section="events" name="register" />
+                      </a>
+                    ) : (
+                      <Link class="btn small" href="/members/events">
+                        <T section="events" name="register" />
+                      </Link>
+                    )}
+                  </div>
+                </article>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </Block>
+
+    <PageEnd
+      title="events.newsletterTitle"
+      body="events.newsletterBody"
+      button="events.newsletterCta"
+      href="/newsletter"
+    />
+  </Page>
+</BaseLayout>

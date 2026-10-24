@@ -1,0 +1,14 @@
+---
+// Internal link that keeps the visitor in the current language (`/about` becomes `/de/about` on German pages).
+import type { HTMLAttributes } from 'astro/types';
+import { asLanguage, localePath } from '@/lib/i18n';
+
+interface Props extends HTMLAttributes<'a'> {
+  href: string;
+}
+const { href, ...rest } = Astro.props;
+---
+
+<a href={localePath(asLanguage(Astro.currentLocale), href)} {...rest}>
+  <slot />
+</a>

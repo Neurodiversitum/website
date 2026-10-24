@@ -1,0 +1,10 @@
+---
+import LegalPage from '@/views/LegalPage.astro';
+
+const blocks = ['prefs', 'session', 'content', 'none'].map((key) => ({
+  title: `${key}Title`,
+  body: `${key}Body`,
+}));
+---
+
+<LegalPage section="cookies" blocks={blocks} />

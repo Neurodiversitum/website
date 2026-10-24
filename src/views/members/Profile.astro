@@ -1,0 +1,207 @@
+---
+// Profile: every field the member can change, plus download and deletion of their data.
+import MemberShell from '@/components/members/MemberShell.astro';
+import ProfileFields from '@/components/members/ProfileFields.astro';
+import T from '@/components/T.astro';
+import Link from '@/components/Link.astro';
+import type { ProfileState } from '@/lib/members/handlers';
+
+interface Props {
+  state: ProfileState;
+}
+import { dict } from '@/data/copy';
+import { asLanguage, copyText } from '@/lib/i18n';
+import { formatBytes, PICTURE_MAX_BYTES } from '@/lib/members/files';
+
+const {
+  state: { errors, saved, values, picture },
+} = Astro.props;
+const member = Astro.locals.member!;
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const pictureKey: Record<string, string> = {
+  saved: 'pictureSaved',
+  removed: 'pictureRemoved',
+  missing: 'pictureMissing',
+  tooBig: 'pictureTooBig',
+  notImage: 'pictureNotImage',
+  noStorage: 'pictureNoStorage',
+};
+const pictureError = picture && picture !== 'saved' && picture !== 'removed';
+---
+
+<MemberShell title="profileTitle" sub="profileSub" active="profile">
+  <div class="form">
+    {saved && (
+      <div class="notice" role="status">
+        <p>
+          <T section="members" name="saved" />
+        </p>
+      </div>
+    )}
+    {errors.length > 0 && (
+      <div class="notice error" role="alert">
+        <p>
+          <T section="members" name="fixErrors" />
+        </p>
+      </div>
+    )}
+    <section id="picture">
+      <h2 class="sub-title">
+        <T section="members" name="pictureTitle" />
+      </h2>
+      {picture && (
+        <div
+          class:list={['notice', { error: pictureError }]}
+          role={pictureError ? 'alert' : 'status'}
+        >
+          <p>{t(`members.${pictureKey[picture]}`)}</p>
+        </div>
+      )}
+      <div class="picture-row">
+        {member.picture_key ? (
+          <img
+            class="avatar large"
+            src={`/api/members/picture/${member.user_id}?v=${encodeURIComponent(member.updated_at)}`}
+            alt={t('members.pictureAlt')}
+            width="96"
+            height="96"
+          />
+        ) : (
+          <span class="avatar large" aria-hidden="true">
+            {member.name
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((part) => part[0]!.toUpperCase())
+              .join('')}
+          </span>
+        )}
+        <div class="picture-forms">
+          <p class="help">
+            <T section="members" name="pictureHelp" />{' '}
+            {formatBytes(PICTURE_MAX_BYTES, lang)}.
+          </p>
+          <form
+            method="post"
+            action="/api/members/picture"
+            enctype="multipart/form-data"
+            id="picture-form"
+          >
+            <input type="hidden" name="lang" value={lang} />
+            <div class="field">
+              <label for="picture-file">
+                <T section="members" name="pictureChoose" />
+              </label>
+              <input
+                id="picture-file"
+                name="picture"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                required
+              />
+            </div>
+            <div class="form-actions">
+              <button class="btn primary small" type="submit">
+                <T section="members" name="pictureSave" />
+              </button>
+              {member.picture_key && (
+                <button class="btn small" type="submit" form="picture-remove">
+                  <T section="members" name="pictureRemove" />
+                </button>
+              )}
+            </div>
+          </form>
+          <form method="post" action="/api/members/picture" id="picture-remove">
+            <input type="hidden" name="lang" value={lang} />
+            <input type="hidden" name="action" value="remove" />
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <h2 class="sub-title">
+      <T section="members" name="profileDetailsTitle" />
+    </h2>
+    <form method="post" novalidate>
+      <div class="field">
+        <span class="label">
+          <T section="members" name="email" />
+        </span>
+        <p class="help">{member.email}</p>
+        <p class="help">
+          <T section="members" name="emailFixed" />
+        </p>
+      </div>
+      <ProfileFields values={values} errors={errors} />
+      <div class="form-actions">
+        <button class="btn primary small" type="submit">
+          <T section="members" name="save" />
+        </button>
+      </div>
+    </form>
+
+    <h2 class="sub-title" id="data">
+      <T section="members" name="dataTitle" />
+    </h2>
+    <p class="lede">
+      <T section="members" name="dataBody" />
+    </p>
+    <div class="form-actions">
+      <a class="btn small" href="/api/members/export">
+        <T section="members" name="download" />
+      </a>
+      <Link class="btn small" href="/members/delete">
+        <T section="members" name="deleteLink" />
+      </Link>
+    </div>
+  </div>
+</MemberShell>
+
+<script>
+  // Shrinks the chosen picture to 512 px in the browser before upload, so uploads stay small
+  // and the Worker receives a WebP it only has to check and store.
+  // On every page (also after a soft page switch, see src/lib/router.ts).
+  const init = () => {
+    const form = document.getElementById(
+      'picture-form',
+    ) as HTMLFormElement | null;
+    const input = document.getElementById(
+      'picture-file',
+    ) as HTMLInputElement | null;
+    if (!form || form.dataset.bound) return;
+    form.dataset.bound = '1';
+    form.addEventListener('submit', async (event) => {
+      if (!input || form.dataset.ready === '1') return;
+      const file = input.files?.[0];
+      if (!file || !file.type.startsWith('image/')) return;
+      event.preventDefault();
+      try {
+        const bitmap = await createImageBitmap(file);
+        const scale = Math.min(1, 512 / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        canvas
+          .getContext('2d')
+          ?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob(resolve, 'image/webp', 0.86),
+        );
+        if (blob) {
+          const transfer = new DataTransfer();
+          transfer.items.add(
+            new File([blob], 'picture.webp', { type: 'image/webp' }),
+          );
+          input.files = transfer.files;
+        }
+      } catch {
+        // The Worker checks and resizes the original instead.
+      }
+      form.dataset.ready = '1';
+      form.requestSubmit();
+    });
+  };
+  init();
+  document.addEventListener('ndt:page', init);
+</script>

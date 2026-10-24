@@ -1,0 +1,30 @@
+---
+// After sign-out or account deletion.
+import MemberShell from '@/components/members/MemberShell.astro';
+import T from '@/components/T.astro';
+import Link from '@/components/Link.astro';
+
+const deleted = Astro.url.searchParams.get('deleted') === '1';
+---
+
+<MemberShell title={deleted ? 'deletedTitle' : 'loggedOutTitle'} nav={false}>
+  <div class="form">
+    <T
+      section="members"
+      name={deleted ? 'deletedBody' : 'loggedOutBody'}
+      as="p"
+      class="lede"
+    />
+    <div class="form-actions">
+      {deleted ? (
+        <Link class="btn small" href="/">
+          <T section="meta" name="backHome" />
+        </Link>
+      ) : (
+        <Link class="btn primary small" href="/members/login">
+          <T section="members" name="loginTitle" />
+        </Link>
+      )}
+    </div>
+  </div>
+</MemberShell>

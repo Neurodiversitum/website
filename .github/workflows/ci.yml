@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Fast checks on every pull request and on main (about 2 minutes).
+  quality:
+    name: Quality checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Formatting
+        run: npm run format:check
+      - name: Type check
+        run: npm run check
+      - name: Unit tests
+        run: npm run test
+      - name: Build
+        run: npm run build
+      - name: Validate HTML
+        run: npm run validate:html
+      - name: Internal links
+        run: npm run check:links
+      # External sites such as LinkedIn block automated requests at random,
+      # so a broken external link warns but does not block the merge.
+      - name: External links (warning only)
+        continue-on-error: true
+        run: npm run check:links:external
+
+  # Browser and Lighthouse checks only on pull requests (about 12 minutes). The hourly content
+  # sync commits to main; running these there too would use most of the free Actions minutes.
+  browser:
+    name: Layout, accessibility and Lighthouse
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Browser for the checks
+        run: npx playwright install --with-deps chromium
+      # The dev server needs a sign-in key for the member area. This one is for the test
+      # database of this run only; the live key lives in the Cloudflare dashboard.
+      - name: Local settings for the member area
+        run: |
+          printf 'BETTER_AUTH_SECRET=%s\n' "ci-only-$(openssl rand -hex 24)" > .dev.vars
+      # Every page in both languages at 320, 375, 390, 768, 1024, 1440 and 1920 px:
+      # no horizontal overflow, no cut-off or overlapping text, zero serious axe issues,
+      # keyboard use with a visible focus ring. Screenshots are kept as an artifact when the job fails.
+      - name: Layout, accessibility and keyboard checks
+        run: npm run test:e2e
+      # Artifacts only when the job fails, kept for one day: GitHub Free gives the organisation
+      # 0.5 GB of Actions storage.
+      - name: Screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: e2e/screenshots
+          retention-days: 1
+      - name: Test traces of failed checks
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: e2e/results
+          retention-days: 1
+      # Lighthouse on the main pages with mobile throttling; budget in lighthouserc.cjs.
+      - name: Lighthouse
+        run: npm run lhci
+      - name: Lighthouse reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse
+          path: .lighthouseci
+          include-hidden-files: true
+          retention-days: 1

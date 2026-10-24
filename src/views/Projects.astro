@@ -1,0 +1,105 @@
+---
+// Projects: the projects from Notion as a list of feature rows, picture and text side by side,
+// alternating; the idea wall at the end.
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Page from '@/components/Page.astro';
+import PageHead from '@/components/PageHead.astro';
+import Block from '@/components/Block.astro';
+import PageEnd from '@/components/PageEnd.astro';
+import MediaImg from '@/components/MediaImg.astro';
+import Placeholder from '@/components/Placeholder.astro';
+import ProjectIcon from '@/components/ProjectIcon.astro';
+import T from '@/components/T.astro';
+import Link from '@/components/Link.astro';
+import { dict } from '@/data/copy';
+import { projectDetails } from '@/data/site';
+import { images, type ImageKey } from '@/data/media';
+import { getProjects, localized } from '@/lib/content';
+import { asLanguage, copyText } from '@/lib/i18n';
+import { countWord } from '@/lib/words';
+
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const projects = getProjects();
+const sub = t('home.projectsSub').replace(
+  '{n}',
+  countWord(projects.length, lang),
+);
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<BaseLayout
+  title={t('meta.projects')}
+  description={t('meta.projectsDescription')}
+  active="projects"
+  headImage="projects"
+>
+  <Page>
+    <PageHead section="projects" media="projects" />
+
+    <Block
+      title="projects.listTitle"
+      subText={projects.length ? sub : undefined}
+    >
+      {projects.length === 0 ? (
+        <div class="empty" data-build style="--i:1">
+          <T section="common" name="comingSoonTitle" as="h3" />
+          <T section="common" name="comingSoonBody" as="p" />
+        </div>
+      ) : (
+        <ol class="features">
+          {projects.map((project, index) => {
+            const media = (
+              project.slug in images ? project.slug : null
+            ) as ImageKey | null;
+            const detail = project.slug in projectDetails;
+            const Tag = detail ? Link : 'div';
+            const attrs = detail ? { href: `/projects/${project.slug}` } : {};
+            return (
+              <li data-build style="--i:1">
+                <Tag class="feature" {...(attrs as { href: string })}>
+                  <span class="col-pic">
+                    {media ? (
+                      <MediaImg
+                        name={media}
+                        decorative
+                        sizes="(min-width: 821px) 50vw, 100vw"
+                      />
+                    ) : project.image ? (
+                      <img src={project.image} alt="" loading="lazy" />
+                    ) : (
+                      <Placeholder pattern="orbits" />
+                    )}
+                  </span>
+                  <div class="feature-text">
+                    <span class="num">{pad(index + 1)}</span>
+                    <h3>
+                      <ProjectIcon slug={project.slug} />
+                      {localized(project.title, lang)}
+                    </h3>
+                    <p>{localized(project.summary, lang)}</p>
+                    {detail && (
+                      <span class="text-link more">
+                        <T section="common" name="learnMore" />
+                        <span class="arrow" aria-hidden="true">
+                          →
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                </Tag>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </Block>
+
+    <PageEnd
+      title="projects.ctaTitle"
+      body="projects.ctaBody"
+      button="projects.ctaBtn"
+      href="/ideas"
+    />
+  </Page>
+</BaseLayout>

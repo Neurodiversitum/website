@@ -1,0 +1,17 @@
+---
+import LegalPage from '@/views/LegalPage.astro';
+
+const blocks = [
+  {
+    title: 'responsibleTitle',
+    body: 'responsibleBody',
+    pre: true,
+    note: 'responsibleNote',
+  },
+  { title: 'contactTitle', body: 'contactBody', pre: true },
+  { title: 'liabilityTitle', body: 'liabilityBody' },
+  { title: 'disputeTitle', body: 'disputeBody' },
+];
+---
+
+<LegalPage section="imprint" blocks={blocks} />

@@ -1,0 +1,11 @@
+---
+import BoardEvents from '@/views/members/BoardEvents.astro';
+import { handleBoardEvents } from '@/lib/members/handlers';
+
+export const prerender = false;
+
+const state = await handleBoardEvents(Astro);
+if (state instanceof Response) return state;
+---
+
+<BoardEvents state={state} />

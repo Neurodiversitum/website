@@ -1,0 +1,250 @@
+---
+// The profile fields shared by the registration and profile forms, with values and errors.
+import T from '@/components/T.astro';
+import { dict } from '@/data/copy';
+import { asLanguage, copyText } from '@/lib/i18n';
+import type { FieldError } from '@/lib/members/validate';
+
+interface Props {
+  values: Record<string, string>;
+  errors: FieldError[];
+  /** Registration asks for the email; the profile shows it as fixed text. */
+  withEmail?: boolean;
+}
+const { values, errors, withEmail = false } = Astro.props;
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const has = (field: FieldError) => errors.includes(field);
+const v = (name: string) => values[name] ?? '';
+const errorKey = (field: FieldError) =>
+  `err${field.charAt(0).toUpperCase()}${field.slice(1)}`;
+---
+
+<fieldset>
+  <div
+    class:list={['field', { invalid: has('name') }]}
+    data-step="name"
+    data-error={t('members.errName')}
+  >
+    <label for="name">
+      <T section="members" name="name" />
+    </label>
+    <input
+      id="name"
+      name="name"
+      type="text"
+      required
+      autocomplete="name"
+      maxlength="120"
+      value={v('name')}
+      aria-invalid={has('name') ? 'true' : undefined}
+      aria-describedby={has('name') ? 'name-error' : undefined}
+    />
+    {has('name') && (
+      <p class="field-error" id="name-error">
+        {t(`members.${errorKey('name')}`)}
+      </p>
+    )}
+  </div>
+  {withEmail && (
+    <div
+      class:list={[
+        'field',
+        { invalid: has('email') || has('emailUniversity') },
+      ]}
+      data-step="email"
+      data-error={t('members.errorEmail')}
+      data-error-university={t('members.errorUniversityEmail')}
+    >
+      <label for="email">
+        <T section="members" name="email" />
+      </label>
+      <input
+        id="email"
+        name="email"
+        type="email"
+        required
+        autocomplete="email"
+        maxlength="254"
+        value={v('email')}
+        aria-invalid={
+          has('email') || has('emailUniversity') ? 'true' : undefined
+        }
+        aria-describedby={
+          has('email') || has('emailUniversity')
+            ? 'email-error email-hint'
+            : 'email-hint'
+        }
+      />
+      {has('email') && (
+        <p class="field-error" id="email-error">
+          {t('members.errorEmail')}
+        </p>
+      )}
+      {has('emailUniversity') && (
+        <p class="field-error" id="email-error">
+          {t('members.errorUniversityEmail')}
+        </p>
+      )}
+      <p class="help" id="email-hint">
+        <T section="members" name="emailHint" />
+      </p>
+    </div>
+  )}
+  <div class="field-row">
+    <div
+      class:list={['field', { invalid: has('university') }]}
+      data-step="university"
+      data-error={t('members.errUniversity')}
+    >
+      <label for="university">
+        <T section="members" name="university" />
+      </label>
+      <select id="university" name="university" required>
+        <option value="" selected={!v('university')}></option>
+        <option value="TUM" selected={v('university') === 'TUM'}>
+          TUM
+        </option>
+        <option value="LMU" selected={v('university') === 'LMU'}>
+          LMU
+        </option>
+      </select>
+      {has('university') && (
+        <p class="field-error">{t('members.errUniversity')}</p>
+      )}
+    </div>
+    <div
+      class:list={['field', { invalid: has('language') }]}
+      data-step="language"
+    >
+      <label for="language">
+        <T section="members" name="language" />
+      </label>
+      <select id="language" name="language" required>
+        <option value="en" selected={(v('language') || lang) === 'en'}>
+          {t('members.languageEn')}
+        </option>
+        <option value="de" selected={(v('language') || lang) === 'de'}>
+          {t('members.languageDe')}
+        </option>
+      </select>
+    </div>
+  </div>
+  <div
+    class:list={['field', { invalid: has('linkedin') }]}
+    data-step="linkedin"
+    data-error={t('members.errLinkedin')}
+  >
+    <label for="linkedin">
+      <T section="members" name="linkedin" />
+    </label>
+    <input
+      id="linkedin"
+      name="linkedin"
+      type="url"
+      autocomplete="url"
+      placeholder="https://www.linkedin.com/in/…"
+      value={v('linkedin')}
+      aria-invalid={has('linkedin') ? 'true' : undefined}
+    />
+    {has('linkedin') && <p class="field-error">{t('members.errLinkedin')}</p>}
+  </div>
+  <div class="field-row">
+    <div
+      class:list={['field', { invalid: has('dateOfBirth') }]}
+      data-step="dateOfBirth"
+      data-note
+      data-error={t('members.errDateOfBirth')}
+    >
+      <label for="dateOfBirth">
+        <T section="members" name="dateOfBirth" />
+      </label>
+      <input
+        id="dateOfBirth"
+        name="dateOfBirth"
+        type="date"
+        autocomplete="bday"
+        min="1900-01-01"
+        value={v('dateOfBirth')}
+        aria-invalid={has('dateOfBirth') ? 'true' : undefined}
+      />
+      {has('dateOfBirth') && (
+        <p class="field-error">{t('members.errDateOfBirth')}</p>
+      )}
+    </div>
+    <div
+      class:list={['field', { invalid: has('gender') }]}
+      data-step="gender"
+      data-note
+    >
+      <label for="gender">
+        <T section="members" name="gender" />
+      </label>
+      <select id="gender" name="gender">
+        <option value="" selected={!v('gender')}>
+          {t('members.noAnswer')}
+        </option>
+        <option value="female" selected={v('gender') === 'female'}>
+          {t('members.genderFemale')}
+        </option>
+        <option value="male" selected={v('gender') === 'male'}>
+          {t('members.genderMale')}
+        </option>
+        <option value="non_binary" selected={v('gender') === 'non_binary'}>
+          {t('members.genderNonBinary')}
+        </option>
+        <option value="not_said" selected={v('gender') === 'not_said'}>
+          {t('members.notSaid')}
+        </option>
+      </select>
+    </div>
+  </div>
+  <p class="help" data-step-note>
+    <T section="members" name="privateHelp" />
+  </p>
+</fieldset>
+
+<fieldset data-step="mail">
+  <legend>
+    <T section="members" name="mailTitle" />
+  </legend>
+  <p class="help">
+    <T section="members" name="mailHelp" />
+  </p>
+  <label class="choice">
+    <input
+      type="checkbox"
+      name="mailEvents"
+      checked={v('mailEvents') === 'on'}
+    />
+    <span>
+      <T section="members" name="mailEvents" />
+    </span>
+  </label>
+  <label class="choice">
+    <input
+      type="checkbox"
+      name="mailNewsletter"
+      checked={v('mailNewsletter') === 'on'}
+    />
+    <span>
+      <T section="members" name="mailNewsletter" />
+    </span>
+  </label>
+</fieldset>
+
+<fieldset data-step="directory">
+  <legend>
+    <T section="members" name="directoryTitle" />
+  </legend>
+  <label class="choice">
+    <input
+      type="checkbox"
+      name="directoryOptIn"
+      checked={v('directoryOptIn') === 'on'}
+    />
+    <span>
+      <T section="members" name="directoryOptIn" />
+    </span>
+  </label>
+</fieldset>

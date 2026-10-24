@@ -1,0 +1,14 @@
+# Copy to .dev.vars for the local Worker (npm run dev). Never commit the real file.
+# In production these are Worker secrets in the Cloudflare dashboard.
+
+# Any long random string, for example from: openssl rand -hex 32
+BETTER_AUTH_SECRET=YOUR_RANDOM_SECRET
+
+# Optional: Notion integrations for events, the member copy and the club inbox.
+NOTION_TOKEN=YOUR_NOTION_TOKEN
+NOTION_MEMBERS_TOKEN=YOUR_NOTION_MEMBERS_TOKEN
+NOTION_INBOX_TOKEN=YOUR_NOTION_INBOX_TOKEN
+
+# Optional: Cloudflare analytics for the club inbox summary.
+CF_ANALYTICS_TOKEN=YOUR_CLOUDFLARE_ANALYTICS_TOKEN
+CF_ZONE_ID=YOUR_CLOUDFLARE_ZONE_ID

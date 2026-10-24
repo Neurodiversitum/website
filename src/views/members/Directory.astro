@@ -1,0 +1,65 @@
+---
+// Opt-in member directory: name, picture, university, LinkedIn. Nothing else, ever.
+import MemberShell from '@/components/members/MemberShell.astro';
+import T from '@/components/T.astro';
+import Link from '@/components/Link.astro';
+import { initials } from '@/lib/content';
+import type { DirectoryState } from '@/lib/members/handlers';
+
+interface Props {
+  state: DirectoryState;
+}
+const {
+  state: { entries, optedIn },
+} = Astro.props;
+---
+
+<MemberShell title="directoryTitle" sub="directorySub" active="directory">
+  <div class="form wide">
+    <T section="members" name="directoryIntro" as="p" class="lede" />
+    <p class="help before">
+      <T
+        section="members"
+        name={optedIn ? 'directoryYouShown' : 'directoryYouHidden'}
+      />{' '}
+      <Link href="/members/profile">
+        <T section="members" name="navProfile" />
+      </Link>
+    </p>
+    {entries.length === 0 ? (
+      <p class="help">
+        <T section="members" name="directoryEmpty" />
+      </p>
+    ) : (
+      <ul class="rows">
+        {entries.map((entry) => (
+          <li class="row">
+            {entry.picture_key ? (
+              <img
+                class="avatar"
+                src={`/api/members/picture/${entry.user_id}`}
+                alt=""
+                width="56"
+                height="56"
+                loading="lazy"
+              />
+            ) : (
+              <span class="avatar" aria-hidden="true">
+                {initials(entry.name)}
+              </span>
+            )}
+            <div>
+              <h2>{entry.name}</h2>
+              <p class="help">{entry.university}</p>
+              {entry.linkedin && (
+                <a href={entry.linkedin} rel="noopener" target="_blank">
+                  <T section="members" name="linkedinLabel" />
+                </a>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</MemberShell>

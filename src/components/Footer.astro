@@ -1,0 +1,29 @@
+---
+// The legal links at the bottom of the last section (and of every plain page).
+import T from './T.astro';
+import Link from './Link.astro';
+import { dict } from '@/data/copy';
+import { site } from '@/data/site';
+import { asLanguage, copyText } from '@/lib/i18n';
+
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const year = new Date().getFullYear();
+---
+
+<footer class="site-foot" data-build style="--i:4">
+  <span>
+    © {year} {site.name} · <T section="common" name="footerLine" />
+  </span>
+  <nav aria-label={t('common.legal')}>
+    <Link href="/imprint">
+      <T section="common" name="imprint" />
+    </Link>
+    <Link href="/privacy">
+      <T section="common" name="privacyPolicy" />
+    </Link>
+    <Link href="/cookies">
+      <T section="common" name="cookiePolicy" />
+    </Link>
+  </nav>
+</footer>

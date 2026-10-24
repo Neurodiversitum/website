@@ -1,0 +1,185 @@
+---
+// The start page of the design study: the starry hero with the 3D atom (drawn by the sky,
+// src/lib/sky.ts), "Explore the club" with four picture tiles, the projects, and the closing
+// section with the legal links. One section per screen.
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Sections from '@/components/Sections.astro';
+import Section from '@/components/Section.astro';
+import HeadRow from '@/components/HeadRow.astro';
+import MediaImg from '@/components/MediaImg.astro';
+import Placeholder from '@/components/Placeholder.astro';
+import ProjectIcon from '@/components/ProjectIcon.astro';
+import Cta from '@/components/Cta.astro';
+import T from '@/components/T.astro';
+import Link from '@/components/Link.astro';
+import { dict } from '@/data/copy';
+import { projectDetails } from '@/data/site';
+import { images, type ImageKey } from '@/data/media';
+import { getProjects, getTeam, initials, localized } from '@/lib/content';
+import { asLanguage, copyText } from '@/lib/i18n';
+import { countWord } from '@/lib/words';
+
+const lang = asLanguage(Astro.currentLocale);
+const t = (path: string) => copyText(dict, lang, path);
+const projects = getProjects();
+const team = getTeam();
+const explore = [
+  { key: 'About', href: '/about', image: 'about' },
+  { key: 'Projects', href: '/projects', image: 'projects' },
+  { key: 'Events', href: '/events', image: 'events' },
+  { key: 'Team', href: '/team', image: 'team' },
+] as const;
+const projectsSub = t('home.projectsSub').replace(
+  '{n}',
+  countWord(projects.length, lang),
+);
+---
+
+<BaseLayout
+  title={t('meta.home')}
+  description={t('meta.homeDescription')}
+  active="home"
+  sky="hero"
+>
+  <Sections>
+    <Section label={t('meta.home')} class="hero-sec" bare first>
+      <div class="hero-copy">
+        <T section="home" name="heroTitle" as="h1" data-build />
+        <T section="home" name="heroBody" as="p" data-build style="--i:1" />
+      </div>
+      <div class="hero-actions">
+        <Link
+          class="btn primary"
+          href="/join"
+          data-build
+          data-join
+          style="--i:2"
+        >
+          <T section="home" name="joinCta" />
+        </Link>
+        <Link class="btn" href="/about" data-build style="--i:3">
+          <T section="home" name="aboutCta" />
+          <span class="arrow" aria-hidden="true">
+            →
+          </span>
+        </Link>
+      </div>
+    </Section>
+
+    <Section label={t('home.exploreTitle')}>
+      <HeadRow title="home.exploreTitle" sub="home.exploreSub" />
+      <div class="explore">
+        {explore.map((item, index) => (
+          <Link
+            class="tile"
+            href={item.href}
+            data-build
+            style={`--i:${index + 1}`}
+          >
+            <div class="pic">
+              <MediaImg
+                name={item.image}
+                tall
+                decorative
+                sizes="(min-width: 821px) 25vw, 50vw"
+              />
+              <h3>
+                <T section="home" name={`explore${item.key}Title`} />
+                <span class="arrow" aria-hidden="true">
+                  →
+                </span>
+              </h3>
+            </div>
+            <T section="home" name={`explore${item.key}Body`} as="p" />
+          </Link>
+        ))}
+      </div>
+    </Section>
+
+    {projects.length > 0 && (
+      <Section label={t('home.projectsTitle')}>
+        <HeadRow title="home.projectsTitle" subText={projectsSub} />
+        <div class="cols">
+          {projects.slice(0, 3).map((project, index) => {
+            const media = (
+              project.slug in images ? project.slug : null
+            ) as ImageKey | null;
+            const href =
+              project.slug in projectDetails
+                ? `/projects/${project.slug}`
+                : '/projects';
+            return (
+              <Link
+                class="col"
+                href={href}
+                data-build
+                style={`--i:${index + 1}`}
+              >
+                <span class="col-pic">
+                  {media ? (
+                    <MediaImg
+                      name={media}
+                      decorative
+                      sizes="(min-width: 821px) 33vw, 96px"
+                    />
+                  ) : project.image ? (
+                    <img src={project.image} alt="" loading="lazy" />
+                  ) : (
+                    <Placeholder pattern="orbits" />
+                  )}
+                </span>
+                <div>
+                  <h3>
+                    <ProjectIcon slug={project.slug} />
+                    {localized(project.title, lang)}
+                  </h3>
+                  <p>{localized(project.summary, lang)}</p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </Section>
+    )}
+
+    {team.length > 0 && (
+      <Section label={t('home.teamTitle')}>
+        <HeadRow title="home.teamTitle" sub="home.teamSub" />
+        <ul class="people">
+          {team.slice(0, 3).map((person, index) => (
+            <li data-build style={`--i:${index + 1}`}>
+              <Link class="person-chip" href="/team">
+                <span class="avatar">
+                  {person.photo ? (
+                    <img
+                      src={person.photo}
+                      alt=""
+                      width="112"
+                      height="112"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span aria-hidden="true">{initials(person.name)}</span>
+                  )}
+                </span>
+                <span class="person-chip-text">
+                  <strong>{person.name}</strong>
+                  <span>{localized(person.role, lang)}</span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <div class="more" data-build style="--i:4">
+          <Link class="btn" href="/team">
+            <T section="home" name="teamCta" />
+            <span class="arrow" aria-hidden="true">
+              →
+            </span>
+          </Link>
+        </div>
+      </Section>
+    )}
+    <Cta title="home.ctaTitle" body="home.ctaBody" button="home.joinCta" join />
+  </Sections>
+</BaseLayout>

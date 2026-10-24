@@ -1,0 +1,115 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Must match the Worker name in the Cloudflare dashboard (Workers & Pages > neurodiversitum).
+  "name": "neurodiversitum",
+  "compatibility_date": "2026-10-09",
+  "compatibility_flags": ["nodejs_compat"],
+  // Worker entry: Astro for requests plus the scheduled handler (src/lib/jobs.ts).
+  "main": "src/worker.ts",
+  // Background jobs every 10 minutes (events from Notion, Notion retry, club inbox). UTC.
+  "triggers": {
+    "crons": ["*/10 * * * *"],
+  },
+  // Serve the live site on the workers.dev address until the custom domain exists,
+  // and give every branch build a preview URL.
+  "workers_dev": true,
+  "preview_urls": true,
+  // Workers Logs and traces in the dashboard (Workers & Pages > neurodiversitum > Observability).
+  // Every request is logged; Workers Paid keeps logs for 7 days.
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+  "assets": {
+    "directory": "./dist/client",
+  },
+  // Member area and club inbox. The ids and addresses below are placeholders in the public
+  // repository: replace them with your own before you deploy. Secrets (set in the dashboard, never here): BETTER_AUTH_SECRET,
+  // NOTION_MEMBERS_TOKEN, NOTION_INBOX_TOKEN, NOTION_TOKEN (events), optional CF_ANALYTICS_TOKEN
+  // and CF_ZONE_ID.
+  "vars": {
+    "ADMIN_EMAILS": "admin@example.org",
+    "MAIL_FROM": "noreply@neurodiversitum.org",
+    "MAIL_REPLY_TO": "contact@neurodiversitum.org",
+    "NOTION_MEMBERS_DB": "YOUR_NOTION_MEMBERS_DB_ID",
+    "NOTION_REGISTRATIONS_DB": "YOUR_NOTION_REGISTRATIONS_DB_ID",
+    "NOTION_INBOX_DB": "YOUR_NOTION_INBOX_DB_ID",
+    "NOTION_EVENTS_DB": "YOUR_NOTION_EVENTS_DB_ID",
+  },
+  // Member database in the EU jurisdiction (created 2026-10-10 in the dashboard; a jurisdiction
+  // can only be set when a database is created).
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "neurodiversitum-members-eu",
+      "database_id": "YOUR_D1_DATABASE_ID",
+    },
+  ],
+  "send_email": [
+    {
+      "name": "EMAIL",
+      "allowed_sender_addresses": ["noreply@neurodiversitum.org"],
+    },
+  ],
+  // Member pictures and material. The buckets live in the EU jurisdiction (GDPR).
+  "r2_buckets": [
+    {
+      "binding": "FILES",
+      "bucket_name": "neurodiversitum-members",
+      "jurisdiction": "eu",
+    },
+  ],
+  // Resizes profile pictures to 512 px WebP on upload (Images binding, 5,000 unique transformations per month included).
+  "images": {
+    "binding": "IMAGES",
+  },
+  "ratelimits": [
+    {
+      "name": "LOGIN_RATE",
+      "namespace_id": "1001",
+      "simple": { "limit": 10, "period": 60 },
+    },
+  ],
+  // Preview builds (every branch except main) use their own database, so tests never touch live data.
+  "previews": {
+    "vars": {
+      "ADMIN_EMAILS": "admin@example.org",
+      "MAIL_FROM": "noreply@neurodiversitum.org",
+      "MAIL_REPLY_TO": "contact@neurodiversitum.org",
+      "NOTION_MEMBERS_DB": "YOUR_NOTION_MEMBERS_DB_ID",
+      "NOTION_REGISTRATIONS_DB": "YOUR_NOTION_REGISTRATIONS_DB_ID",
+      "NOTION_INBOX_DB": "YOUR_NOTION_INBOX_DB_ID",
+      "NOTION_EVENTS_DB": "YOUR_NOTION_EVENTS_DB_ID",
+    },
+    "d1_databases": [
+      {
+        "binding": "DB",
+        "database_name": "neurodiversitum-members-preview-eu",
+        "database_id": "YOUR_PREVIEW_D1_DATABASE_ID",
+      },
+    ],
+    "send_email": [
+      {
+        "name": "EMAIL",
+        "allowed_sender_addresses": ["noreply@neurodiversitum.org"],
+      },
+    ],
+    "r2_buckets": [
+      {
+        "binding": "FILES",
+        "bucket_name": "neurodiversitum-members-preview",
+        "jurisdiction": "eu",
+      },
+    ],
+    "images": {
+      "binding": "IMAGES",
+    },
+    "ratelimits": [
+      {
+        "name": "LOGIN_RATE",
+        "namespace_id": "1001",
+        "simple": { "limit": 10, "period": 60 },
+      },
+    ],
+  },
+}

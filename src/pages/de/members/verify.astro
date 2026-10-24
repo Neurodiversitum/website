@@ -1,0 +1,11 @@
+---
+import Verify from '@/views/members/Verify.astro';
+import { handleVerify } from '@/lib/members/handlers';
+
+export const prerender = false;
+
+const state = await handleVerify(Astro);
+if (state instanceof Response) return state;
+---
+
+<Verify state={state} />

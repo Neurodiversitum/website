@@ -1,0 +1,15 @@
+---
+// The club logo (public/logo.svg) drawn inline in the current text colour.
+import logo from '../../public/logo.svg?raw';
+
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+const viewBox = logo.match(/viewBox="([^"]+)"/)?.[1] ?? '0 0 100 100';
+const d = logo.match(/ d="([^"]+)"/)?.[1] ?? '';
+---
+
+<svg class={className} viewBox={viewBox} aria-hidden="true" focusable="false">
+  <path fill="currentColor" fill-rule="evenodd" d={d}></path>
+</svg>

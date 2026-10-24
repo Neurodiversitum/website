@@ -1,0 +1,53 @@
+---
+// The page behind the emailed link: one button finishes the sign-in, so link scanners cannot.
+import MemberShell from '@/components/members/MemberShell.astro';
+import T from '@/components/T.astro';
+import Link from '@/components/Link.astro';
+import { asLanguage, localePath } from '@/lib/i18n';
+import type { VerifyState } from '@/lib/members/handlers';
+
+interface Props {
+  state: VerifyState;
+}
+const {
+  state: { token },
+} = Astro.props;
+const lang = asLanguage(Astro.currentLocale);
+---
+
+<MemberShell title="verifyTitle" nav={false}>
+  <div class="form">
+    {token ? (
+      <form method="get" action="/api/auth/magic-link/verify">
+        <input type="hidden" name="token" value={token} />
+        <input
+          type="hidden"
+          name="callbackURL"
+          value={localePath(lang, '/members')}
+        />
+        <input
+          type="hidden"
+          name="errorCallbackURL"
+          value={localePath(lang, '/members/login')}
+        />
+        <T section="members" name="verifyBody" as="p" class="lede" />
+        <div class="form-actions">
+          <button class="btn primary small" type="submit">
+            <T section="members" name="verifyButton" />
+          </button>
+        </div>
+      </form>
+    ) : (
+      <>
+        <div class="notice error" role="alert">
+          <p>
+            <T section="members" name="verifyMissing" />
+          </p>
+        </div>
+        <Link class="btn small" href="/members/login">
+          <T section="members" name="loginTitle" />
+        </Link>
+      </>
+    )}
+  </div>
+</MemberShell>

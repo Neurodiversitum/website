@@ -1,0 +1,43 @@
+---
+// Account deletion with one explicit confirmation.
+import MemberShell from '@/components/members/MemberShell.astro';
+import T from '@/components/T.astro';
+import Link from '@/components/Link.astro';
+import type { DeleteState } from '@/lib/members/handlers';
+
+interface Props {
+  state: DeleteState;
+}
+const {
+  state: { needsConfirm },
+} = Astro.props;
+---
+
+<MemberShell title="deleteTitle" sub="deleteSub" active="profile">
+  <div class="form">
+    <T section="members" name="deleteBody" as="p" class="lede" />
+    {needsConfirm && (
+      <div class="notice error" role="alert">
+        <p>
+          <T section="members" name="deleteNeedsConfirm" />
+        </p>
+      </div>
+    )}
+    <form method="post">
+      <label class="choice consent">
+        <input type="checkbox" name="confirm" required />
+        <span>
+          <T section="members" name="deleteConfirm" />
+        </span>
+      </label>
+      <div class="form-actions">
+        <button class="btn primary small" type="submit">
+          <T section="members" name="deleteButton" />
+        </button>
+        <Link class="btn small" href="/members/profile">
+          <T section="members" name="cancel" />
+        </Link>
+      </div>
+    </form>
+  </div>
+</MemberShell>

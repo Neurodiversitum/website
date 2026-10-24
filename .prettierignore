@@ -1,0 +1,11 @@
+node_modules
+dist
+.astro
+.wrangler
+Website
+public/assets
+package-lock.json
+worker-configuration.d.ts
+e2e/results
+e2e/screenshots
+.lighthouseci
